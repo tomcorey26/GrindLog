@@ -30,14 +30,6 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
 
   useEffect(() => { fetchHabits(); }, [fetchHabits]);
 
-  // Auto-show timer view if there's an active timer on load
-  useEffect(() => {
-    const activeHabit = habits.find(h => h.activeTimer);
-    if (activeHabit && activeView === 'list' && !loading) {
-      // Don't auto-navigate, let user choose
-    }
-  }, [habits, activeView, loading]);
-
   async function handleStart(habitId: number) {
     await fetch('/api/timer/start', {
       method: 'POST',

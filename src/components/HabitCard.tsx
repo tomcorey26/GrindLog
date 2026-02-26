@@ -25,7 +25,7 @@ function formatTime(totalSeconds: number): string {
 }
 
 function formatElapsed(startTimeIso: string): string {
-  const elapsed = Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000);
+  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000));
   const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
   const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
   const s = (elapsed % 60).toString().padStart(2, '0');
@@ -53,7 +53,7 @@ export function HabitCard({
   const isActive = !!habit.activeTimer;
 
   return (
-    <Card className={`transition-all ${isActive ? 'ring-2 ring-primary' : ''}`}>
+    <Card className={`transition-all ${isActive ? 'ring-2 ring-primary animate-pulse-subtle' : ''}`}>
       <CardContent className="p-4 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">{habit.name}</h3>

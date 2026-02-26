@@ -61,7 +61,7 @@ export function TimerView({ habitName, startTime, todaySeconds, streak, onStop, 
         <Button size="lg" onClick={handleStop} className="px-12 py-6 text-lg">Stop</Button>
       </div>
 
-      <footer className="px-4 pb-8 pb-[env(safe-area-inset-bottom)] text-center space-y-1">
+      <footer className="px-4 pb-[max(2rem,env(safe-area-inset-bottom))] text-center space-y-1">
         <p className="text-sm text-muted-foreground">Today total: {formatTime(todaySeconds)}</p>
         <p className="text-sm text-muted-foreground">
           {streak > 0 ? `${streak} day streak` : 'No streak yet'}

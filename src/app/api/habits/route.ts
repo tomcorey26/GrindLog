@@ -89,7 +89,12 @@ export async function POST(request: Request) {
   const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
   const parsed = createHabitSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 });

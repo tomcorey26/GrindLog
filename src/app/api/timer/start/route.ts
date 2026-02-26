@@ -13,7 +13,12 @@ export async function POST(request: Request) {
   const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
   const parsed = startSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid habitId' }, { status: 400 });
 
@@ -27,23 +32,23 @@ export async function POST(request: Request) {
     .get();
   if (!habit) return NextResponse.json({ error: 'Habit not found' }, { status: 404 });
 
-  // Stop any existing timer first
-  const existing = await db.select().from(activeTimers).where(eq(activeTimers.userId, userId)).get();
-  if (existing) {
+  // Stop any existing timer and start new one in a transaction
+  await db.transaction(async (tx) => {
+    const existing = await tx.select().from(activeTimers).where(eq(activeTimers.userId, userId)).get();
+    if (existing) {
+      const now = new Date();
+      const durationSeconds = Math.round((now.getTime() - existing.startTime.getTime()) / 1000);
+      await tx.insert(timeSessions).values({
+        habitId: existing.habitId,
+        startTime: existing.startTime,
+        endTime: now,
+        durationSeconds,
+      });
+      await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    }
     const now = new Date();
-    const durationSeconds = Math.round((now.getTime() - existing.startTime.getTime()) / 1000);
-    await db.insert(timeSessions).values({
-      habitId: existing.habitId,
-      startTime: existing.startTime,
-      endTime: now,
-      durationSeconds,
-    });
-    await db.delete(activeTimers).where(eq(activeTimers.userId, userId));
-  }
+    await tx.insert(activeTimers).values({ habitId, userId, startTime: now });
+  });
 
-  // Start new timer
-  const now = new Date();
-  await db.insert(activeTimers).values({ habitId, userId, startTime: now });
-
-  return NextResponse.json({ startTime: now.toISOString(), habitId });
+  return NextResponse.json({ startTime: new Date().toISOString(), habitId });
 }

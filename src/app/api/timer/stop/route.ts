@@ -14,14 +14,15 @@ export async function POST() {
   const now = new Date();
   const durationSeconds = Math.round((now.getTime() - timer.startTime.getTime()) / 1000);
 
-  await db.insert(timeSessions).values({
-    habitId: timer.habitId,
-    startTime: timer.startTime,
-    endTime: now,
-    durationSeconds,
+  await db.transaction(async (tx) => {
+    await tx.insert(timeSessions).values({
+      habitId: timer.habitId,
+      startTime: timer.startTime,
+      endTime: now,
+      durationSeconds,
+    });
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
   });
-
-  await db.delete(activeTimers).where(eq(activeTimers.userId, userId));
 
   return NextResponse.json({ durationSeconds, habitId: timer.habitId });
 }

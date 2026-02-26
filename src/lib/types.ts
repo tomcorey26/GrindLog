@@ -5,3 +5,13 @@ export type Habit = {
   streak: number;
   activeTimer: { startTime: string; targetDurationSeconds: number | null } | null;
 };
+
+export type Session = {
+  id: number;
+  habitName: string;
+  habitId: number;
+  startTime: string;
+  endTime: string;
+  durationSeconds: number;
+  timerMode: string;
+};

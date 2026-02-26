@@ -1,47 +1,66 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { formatTime, formatElapsed, formatRemaining, isCountdownComplete } from '@/lib/format';
 
 type Props = {
   habitName: string;
-  habitId: number;
   startTime: string;
+  targetDurationSeconds: number | null;
   todaySeconds: number;
   streak: number;
   onStop: () => void;
   onBack: () => void;
 };
 
-function formatElapsed(startTimeIso: string): string {
-  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000));
-  const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
-  const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
-  const s = (elapsed % 60).toString().padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
-
-function formatTime(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-export function TimerView({ habitName, startTime, todaySeconds, streak, onStop, onBack }: Props) {
-  const [elapsed, setElapsed] = useState(formatElapsed(startTime));
+export function TimerView({ habitName, startTime, targetDurationSeconds, todaySeconds, streak, onStop, onBack }: Props) {
+  const isCountdown = targetDurationSeconds !== null;
+  const [display, setDisplay] = useState(() =>
+    isCountdown
+      ? formatRemaining(startTime, targetDurationSeconds)
+      : formatElapsed(startTime)
+  );
+  const [finished, setFinished] = useState(() =>
+    isCountdown ? isCountdownComplete(startTime, targetDurationSeconds) : false
+  );
+  const autoStopTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setElapsed(formatElapsed(startTime));
+      if (isCountdown) {
+        setDisplay(formatRemaining(startTime, targetDurationSeconds));
+        if (isCountdownComplete(startTime, targetDurationSeconds)) {
+          setFinished(true);
+        }
+      } else {
+        setDisplay(formatElapsed(startTime));
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, targetDurationSeconds, isCountdown]);
 
-  async function handleStop() {
-    await fetch('/api/timer/stop', { method: 'POST' });
-    onStop();
-  }
+  // Auto-stop and alarm when countdown finishes
+  useEffect(() => {
+    if (!finished) return;
+
+    try {
+      const audio = new Audio('/alarm.mp3');
+      audio.play().catch(() => {});
+    } catch {
+      // Ignore audio errors
+    }
+
+    autoStopTimeout.current = setTimeout(() => {
+      onStop();
+    }, 2000);
+
+    return () => {
+      if (autoStopTimeout.current) {
+        clearTimeout(autoStopTimeout.current);
+      }
+    };
+  }, [finished, onStop]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -52,13 +71,21 @@ export function TimerView({ habitName, startTime, todaySeconds, streak, onStop, 
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
-        <p className="text-6xl font-mono font-light tracking-tight mb-3">{elapsed}</p>
+        <p className="text-6xl font-mono font-light tracking-tight mb-3">{display}</p>
         <div className="flex items-center gap-2 mb-12">
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-sm text-muted-foreground">Recording...</span>
+          {finished ? (
+            <span className="text-sm font-semibold text-primary">Time&apos;s up!</span>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                {isCountdown ? 'Counting down...' : 'Recording...'}
+              </span>
+            </>
+          )}
         </div>
 
-        <Button size="lg" onClick={handleStop} className="px-12 py-6 text-lg">Stop</Button>
+        <Button size="lg" onClick={onStop} className="px-12 py-6 text-lg">Stop</Button>
       </div>
 
       <footer className="px-4 pb-[max(2rem,env(safe-area-inset-bottom))] text-center space-y-1">

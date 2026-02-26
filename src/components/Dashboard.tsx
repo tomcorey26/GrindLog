@@ -5,19 +5,14 @@ import { Button } from '@/components/ui/button';
 import { HabitCard } from '@/components/HabitCard';
 import { AddHabitForm } from '@/components/AddHabitForm';
 import { TimerView } from '@/components/TimerView';
-
-type Habit = {
-  id: number;
-  name: string;
-  todaySeconds: number;
-  streak: number;
-  activeTimer: { startTime: string } | null;
-};
+import { StartTimerModal } from '@/components/StartTimerModal';
+import type { Habit } from '@/lib/types';
 
 export function Dashboard({ user, onLogout }: { user: { id: number; email: string }; onLogout: () => void }) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<'list' | 'timer'>('list');
+  const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
 
   const fetchHabits = useCallback(async () => {
     const res = await fetch('/api/habits');
@@ -30,33 +25,43 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
 
   useEffect(() => { fetchHabits(); }, [fetchHabits]);
 
-  async function handleStart(habitId: number) {
-    await fetch('/api/timer/start', {
+  function handleStartClick(habitId: number) {
+    setPendingHabitId(habitId);
+  }
+
+  async function handleStartConfirm(targetDurationSeconds?: number) {
+    if (pendingHabitId === null) return;
+    const res = await fetch('/api/timer/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId }),
+      body: JSON.stringify({ habitId: pendingHabitId, targetDurationSeconds }),
     });
+    if (!res.ok) return;
+    setPendingHabitId(null);
     await fetchHabits();
     setActiveView('timer');
   }
 
   async function handleStop() {
-    await fetch('/api/timer/stop', { method: 'POST' });
+    const res = await fetch('/api/timer/stop', { method: 'POST' });
+    if (!res.ok) return;
     await fetchHabits();
     setActiveView('list');
   }
 
   async function handleDelete(habitId: number) {
-    await fetch(`/api/habits/${habitId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/habits/${habitId}`, { method: 'DELETE' });
+    if (!res.ok) return;
     fetchHabits();
   }
 
   async function handleAdd(name: string) {
-    await fetch('/api/habits', {
+    const res = await fetch('/api/habits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     });
+    if (!res.ok) return;
     fetchHabits();
   }
 
@@ -67,13 +72,25 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
 
   const activeHabit = habits.find(h => h.activeTimer);
 
+  // Start timer modal
+  const pendingHabit = habits.find(h => h.id === pendingHabitId);
+  if (pendingHabitId && pendingHabit) {
+    return (
+      <StartTimerModal
+        habitName={pendingHabit.name}
+        onStart={handleStartConfirm}
+        onCancel={() => setPendingHabitId(null)}
+      />
+    );
+  }
+
   // Timer view
   if (activeView === 'timer' && activeHabit) {
     return (
       <TimerView
         habitName={activeHabit.name}
-        habitId={activeHabit.id}
         startTime={activeHabit.activeTimer!.startTime}
+        targetDurationSeconds={activeHabit.activeTimer!.targetDurationSeconds}
         todaySeconds={activeHabit.todaySeconds}
         streak={activeHabit.streak}
         onStop={handleStop}
@@ -101,11 +118,11 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
           <div className="space-y-3 mb-6">
             {activeHabit && (
               <div onClick={() => setActiveView('timer')} className="cursor-pointer">
-                <HabitCard key={activeHabit.id} habit={activeHabit} onStart={handleStart} onDelete={handleDelete} />
+                <HabitCard key={activeHabit.id} habit={activeHabit} onStart={handleStartClick} onDelete={handleDelete} />
               </div>
             )}
             {habits.filter(h => !h.activeTimer).map((habit) => (
-              <HabitCard key={habit.id} habit={habit} onStart={handleStart} onDelete={handleDelete} />
+              <HabitCard key={habit.id} habit={habit} onStart={handleStartClick} onDelete={handleDelete} />
             ))}
           </div>
         )}

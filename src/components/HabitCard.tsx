@@ -8,29 +8,8 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useEffect, useState } from 'react';
-
-type Habit = {
-  id: number;
-  name: string;
-  todaySeconds: number;
-  streak: number;
-  activeTimer: { startTime: string } | null;
-};
-
-function formatTime(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-function formatElapsed(startTimeIso: string): string {
-  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000));
-  const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
-  const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
-  const s = (elapsed % 60).toString().padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
+import { formatTime, formatElapsed, formatRemaining } from '@/lib/format';
+import type { Habit } from '@/lib/types';
 
 export function HabitCard({
   habit, onStart, onDelete,
@@ -41,14 +20,22 @@ export function HabitCard({
 }) {
   const [elapsed, setElapsed] = useState('');
 
+  const activeStartTime = habit.activeTimer?.startTime;
+
   useEffect(() => {
-    if (!habit.activeTimer) return;
-    setElapsed(formatElapsed(habit.activeTimer.startTime));
-    const interval = setInterval(() => {
-      setElapsed(formatElapsed(habit.activeTimer!.startTime));
-    }, 1000);
+    if (!activeStartTime) return;
+    const targetDuration = habit.activeTimer?.targetDurationSeconds ?? null;
+    const update = () => {
+      setElapsed(
+        targetDuration !== null
+          ? formatRemaining(activeStartTime, targetDuration)
+          : formatElapsed(activeStartTime)
+      );
+    };
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [habit.activeTimer]);
+  }, [activeStartTime, habit.activeTimer?.targetDurationSeconds]);
 
   const isActive = !!habit.activeTimer;
 

@@ -50,6 +50,7 @@ test.describe('Sessions History', () => {
     // Complete a Guitar session
     await page.locator('button', { hasText: /start/i }).first().click();
     await page.getByText('Stopwatch').click();
+    await expect(page.getByText('Recording...')).toBeVisible();
     await page.getByRole('button', { name: /stop/i }).click();
 
     // Navigate to Sessions tab

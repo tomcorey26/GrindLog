@@ -1,0 +1,129 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { formatTime } from '@/lib/format';
+import type { Session } from '@/lib/types';
+
+type DateRange = 'today' | 'week' | 'month' | 'all';
+
+export function SessionsView({ habits }: { habits: { id: number; name: string }[] }) {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [totalSeconds, setTotalSeconds] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [selectedHabitId, setSelectedHabitId] = useState<string>('');
+  const [dateRange, setDateRange] = useState<DateRange>('all');
+
+  const fetchSessions = useCallback(async () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (selectedHabitId) params.set('habitId', selectedHabitId);
+    if (dateRange !== 'all') params.set('range', dateRange);
+
+    const res = await fetch(`/api/sessions?${params}`);
+    if (res.ok) {
+      const data = await res.json();
+      setSessions(data.sessions);
+      setTotalSeconds(data.totalSeconds);
+    }
+    setLoading(false);
+  }, [selectedHabitId, dateRange]);
+
+  useEffect(() => { fetchSessions(); }, [fetchSessions]);
+
+  const dateRanges: { value: DateRange; label: string }[] = [
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'month', label: 'This Month' },
+    { value: 'all', label: 'All Time' },
+  ];
+
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+  }
+
+  function formatTimeOfDay(iso: string) {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: 'numeric', minute: '2-digit',
+    });
+  }
+
+  function formatDuration(seconds: number) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="space-y-2">
+        <select
+          value={selectedHabitId}
+          onChange={(e) => setSelectedHabitId(e.target.value)}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="">All Skills</option>
+          {habits.map(h => (
+            <option key={h.id} value={h.id}>{h.name}</option>
+          ))}
+        </select>
+
+        <div className="flex gap-1">
+          {dateRanges.map(r => (
+            <Button
+              key={r.value}
+              variant={dateRange === r.value ? 'default' : 'outline'}
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => setDateRange(r.value)}
+            >
+              {r.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="text-center py-2">
+        <p className="text-sm text-muted-foreground">Total Time</p>
+        <p className="text-2xl font-bold">{formatTime(totalSeconds)}</p>
+      </div>
+
+      {/* Sessions list */}
+      {loading ? (
+        <p className="text-center text-muted-foreground">Loading...</p>
+      ) : sessions.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">No sessions yet</p>
+      ) : (
+        <div className="space-y-2">
+          {sessions.map(session => (
+            <Card key={session.id}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium">{session.habitName}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
+                    {session.timerMode}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{formatDate(session.endTime)}</span>
+                  <span className="font-mono">{formatDuration(session.durationSeconds)}</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {formatTimeOfDay(session.startTime)} — {formatTimeOfDay(session.endTime)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

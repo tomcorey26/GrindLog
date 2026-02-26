@@ -7,13 +7,14 @@ import { AddHabitForm } from '@/components/AddHabitForm';
 import { TimerView } from '@/components/TimerView';
 import { StartTimerModal } from '@/components/StartTimerModal';
 import { SessionsView } from '@/components/SessionsView';
+import { RankingsView } from '@/components/RankingsView';
 import { LogSessionModal } from '@/components/LogSessionModal';
 import type { Habit } from '@/lib/types';
 
 export function Dashboard({ user, onLogout }: { user: { id: number; email: string }; onLogout: () => void }) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'list' | 'timer' | 'sessions'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'timer' | 'sessions' | 'rankings'>('list');
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
 
@@ -141,6 +142,14 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
           >
             Sessions
           </button>
+          <button
+            onClick={() => setActiveView('rankings')}
+            className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              activeView === 'rankings' ? 'bg-background shadow-sm' : 'text-muted-foreground'
+            }`}
+          >
+            Rankings
+          </button>
         </div>
 
         {loggingHabit && (
@@ -152,7 +161,9 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
           />
         )}
 
-        {activeView === 'sessions' ? (
+        {activeView === 'rankings' ? (
+          <RankingsView />
+        ) : activeView === 'sessions' ? (
           <SessionsView habits={habits.map(h => ({ id: h.id, name: h.name }))} />
         ) : (
           <>

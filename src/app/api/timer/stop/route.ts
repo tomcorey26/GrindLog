@@ -13,6 +13,7 @@ export async function POST() {
 
   const now = new Date();
   const durationSeconds = Math.round((now.getTime() - timer.startTime.getTime()) / 1000);
+  const timerMode = timer.targetDurationSeconds !== null ? 'countdown' : 'stopwatch';
 
   await db.transaction(async (tx) => {
     await tx.insert(timeSessions).values({
@@ -20,6 +21,7 @@ export async function POST() {
       startTime: timer.startTime,
       endTime: now,
       durationSeconds,
+      timerMode,
     });
     await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
   });

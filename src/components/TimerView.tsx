@@ -64,7 +64,7 @@ export function TimerView({ habitName, startTime, targetDurationSeconds, todaySe
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="flex items-center justify-between px-4 py-4">
+      <header className="flex items-center justify-between px-4 py-4 relative z-10">
         <button onClick={onBack} className="text-muted-foreground text-sm">&larr; Back</button>
         <span className="font-semibold">{habitName}</span>
         <div className="w-12" />

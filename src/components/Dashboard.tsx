@@ -7,6 +7,7 @@ import { AddHabitForm } from '@/components/AddHabitForm';
 import { TimerView } from '@/components/TimerView';
 import { StartTimerModal } from '@/components/StartTimerModal';
 import { SessionsView } from '@/components/SessionsView';
+import { LogSessionModal } from '@/components/LogSessionModal';
 import type { Habit } from '@/lib/types';
 
 export function Dashboard({ user, onLogout }: { user: { id: number; email: string }; onLogout: () => void }) {
@@ -14,6 +15,7 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<'list' | 'timer' | 'sessions'>('list');
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
+  const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
 
   const fetchHabits = useCallback(async () => {
     const res = await fetch('/api/habits');
@@ -66,6 +68,15 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
     fetchHabits();
   }
 
+  function handleLogClick(habitId: number) {
+    setLoggingHabitId(habitId);
+  }
+
+  async function handleLogSave() {
+    setLoggingHabitId(null);
+    await fetchHabits();
+  }
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     onLogout();
@@ -75,6 +86,7 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
 
   // Start timer modal
   const pendingHabit = habits.find(h => h.id === pendingHabitId);
+  const loggingHabit = habits.find(h => h.id === loggingHabitId);
   if (pendingHabitId && pendingHabit) {
     return (
       <StartTimerModal
@@ -131,6 +143,15 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
           </button>
         </div>
 
+        {loggingHabit && (
+          <LogSessionModal
+            habitId={loggingHabit.id}
+            habitName={loggingHabit.name}
+            onSave={handleLogSave}
+            onCancel={() => setLoggingHabitId(null)}
+          />
+        )}
+
         {activeView === 'sessions' ? (
           <SessionsView habits={habits.map(h => ({ id: h.id, name: h.name }))} />
         ) : (
@@ -145,11 +166,11 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
               <div className="space-y-3 mb-6">
                 {activeHabit && (
                   <div onClick={() => setActiveView('timer')} className="cursor-pointer">
-                    <HabitCard key={activeHabit.id} habit={activeHabit} onStart={handleStartClick} onDelete={handleDelete} />
+                    <HabitCard key={activeHabit.id} habit={activeHabit} onStart={handleStartClick} onDelete={handleDelete} onLog={handleLogClick} />
                   </div>
                 )}
                 {habits.filter(h => !h.activeTimer).map((habit) => (
-                  <HabitCard key={habit.id} habit={habit} onStart={handleStartClick} onDelete={handleDelete} />
+                  <HabitCard key={habit.id} habit={habit} onStart={handleStartClick} onDelete={handleDelete} onLog={handleLogClick} />
                 ))}
               </div>
             )}

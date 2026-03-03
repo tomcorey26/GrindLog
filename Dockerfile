@@ -42,10 +42,9 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/src/db ./src/db
 
-USER nextjs
-
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD node_modules/.bin/drizzle-kit push && node server.js
+# Fix volume permissions at startup (runs as root), then drop to nextjs
+CMD chown -R nextjs:nodejs /app/data && su -s /bin/sh nextjs -c "node_modules/.bin/drizzle-kit push && node server.js"

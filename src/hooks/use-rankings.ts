@@ -9,10 +9,11 @@ type Ranking = {
   totalSeconds: number;
 };
 
-export function useRankings() {
+export function useRankings(initialData?: Ranking[]) {
   return useSuspenseQuery({
     queryKey: queryKeys.rankings.all,
     queryFn: () => api<{ rankings: Ranking[] }>('/api/rankings'),
     select: (data) => data.rankings,
+    ...(initialData ? { initialData: { rankings: initialData } } : {}),
   });
 }

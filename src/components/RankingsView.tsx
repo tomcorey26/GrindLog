@@ -10,8 +10,15 @@ const RANK_COLORS: Record<number, string> = {
   3: 'text-amber-600',
 };
 
-export function RankingsView() {
-  const { data: rankings } = useRankings();
+type Ranking = {
+  rank: number;
+  habitId: number;
+  habitName: string;
+  totalSeconds: number;
+};
+
+export function RankingsView({ initialRankings }: { initialRankings?: Ranking[] }) {
+  const { data: rankings } = useRankings(initialRankings);
 
   if (rankings.length === 0) {
     return <p className="text-center text-muted-foreground py-8">No rankings yet</p>;

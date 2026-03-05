@@ -1,39 +1,23 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarView } from '@/components/CalendarView';
 import { List, CalendarDays } from 'lucide-react';
 import { formatTime } from '@/lib/format';
-import type { Session } from '@/lib/types';
+import { useSessions } from '@/hooks/use-sessions';
 
 type DateRange = 'today' | 'week' | 'month' | 'all';
 
 export function SessionsView({ habits }: { habits: { id: number; name: string }[] }) {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [totalSeconds, setTotalSeconds] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [selectedHabitId, setSelectedHabitId] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (selectedHabitId) params.set('habitId', selectedHabitId);
-    if (viewMode === 'list' && dateRange !== 'all') params.set('range', dateRange);
-
-    const res = await fetch(`/api/sessions?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      setSessions(data.sessions);
-      setTotalSeconds(data.totalSeconds);
-    }
-    setLoading(false);
-  }, [selectedHabitId, dateRange, viewMode]);
-
-  useEffect(() => { fetchSessions(); }, [fetchSessions]);
+  const { data } = useSessions({ habitId: selectedHabitId || undefined, range: dateRange, viewMode });
+  const sessions = data.sessions;
+  const totalSeconds = data.totalSeconds;
 
   const dateRanges: { value: DateRange; label: string }[] = [
     { value: 'today', label: 'Today' },
@@ -124,36 +108,30 @@ export function SessionsView({ habits }: { habits: { id: number; name: string }[
       {/* Sessions list or calendar */}
       {viewMode === 'calendar' ? (
         <CalendarView sessions={sessions} habits={habits} />
+      ) : sessions.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">No sessions yet</p>
       ) : (
-        <>
-          {loading ? (
-            <p className="text-center text-muted-foreground">Loading...</p>
-          ) : sessions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No sessions yet</p>
-          ) : (
-            <div className="space-y-2">
-              {sessions.map(session => (
-                <Card key={session.id}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium">{session.habitName}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
-                        {session.timerMode}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{formatDate(session.endTime)}</span>
-                      <span className="font-mono">{formatDuration(session.durationSeconds)}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {formatTimeOfDay(session.startTime)} — {formatTimeOfDay(session.endTime)}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </>
+        <div className="space-y-2">
+          {sessions.map(session => (
+            <Card key={session.id}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium">{session.habitName}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
+                    {session.timerMode}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{formatDate(session.endTime)}</span>
+                  <span className="font-mono">{formatDuration(session.durationSeconds)}</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {formatTimeOfDay(session.startTime)} — {formatTimeOfDay(session.endTime)}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

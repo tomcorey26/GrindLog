@@ -3,11 +3,12 @@ import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import type { Habit } from '@/lib/types';
 
-export function useHabits() {
+export function useHabits(initialData?: Habit[]) {
   return useSuspenseQuery({
     queryKey: queryKeys.habits.all,
     queryFn: () => api<{ habits: Habit[] }>('/api/habits'),
     select: (data) => data.habits,
+    ...(initialData ? { initialData: { habits: initialData } } : {}),
   });
 }
 

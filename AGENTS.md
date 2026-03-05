@@ -1,0 +1,1 @@
+- Create a design document for the patterns you want followed for nextjs projects. use speech islands as a reference

@@ -1,10 +1,10 @@
-import { defineConfig } from 'vitest/config';
+import { defaultExclude, defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
   test: {
     globals: true,
-    exclude: ['e2e/**', 'node_modules/**'],
+    exclude: [...defaultExclude, 'e2e/**', '.worktrees/**'],
   },
   resolve: {
     alias: {

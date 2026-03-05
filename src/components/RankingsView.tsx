@@ -1,15 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatTime } from '@/lib/format';
-
-type Ranking = {
-  rank: number;
-  habitId: number;
-  habitName: string;
-  totalSeconds: number;
-};
+import { useRankings } from '@/hooks/use-rankings';
 
 const RANK_COLORS: Record<number, string> = {
   1: 'text-yellow-500',
@@ -18,24 +11,7 @@ const RANK_COLORS: Record<number, string> = {
 };
 
 export function RankingsView() {
-  const [rankings, setRankings] = useState<Ranking[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchRankings() {
-      const res = await fetch('/api/rankings');
-      if (res.ok) {
-        const data = await res.json();
-        setRankings(data.rankings);
-      }
-      setLoading(false);
-    }
-    fetchRankings();
-  }, []);
-
-  if (loading) {
-    return <p className="text-center text-muted-foreground">Loading...</p>;
-  }
+  const { data: rankings } = useRankings();
 
   if (rankings.length === 0) {
     return <p className="text-center text-muted-foreground py-8">No rankings yet</p>;

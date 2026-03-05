@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { HabitCard } from '@/components/HabitCard';
 import { AddHabitForm } from '@/components/AddHabitForm';
@@ -9,78 +9,63 @@ import { StartTimerModal } from '@/components/StartTimerModal';
 import { SessionsView } from '@/components/SessionsView';
 import { RankingsView } from '@/components/RankingsView';
 import { LogSessionModal } from '@/components/LogSessionModal';
-import type { Habit } from '@/lib/types';
+import { Spinner } from '@/components/Spinner';
+import { useHabits, useAddHabit, useDeleteHabit, useStartTimer, useStopTimer } from '@/hooks/use-habits';
+import { useLogout } from '@/hooks/use-auth';
 
-export function Dashboard({ user, onLogout }: { user: { id: number; email: string }; onLogout: () => void }) {
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [loading, setLoading] = useState(true);
+export function Dashboard({ user }: { user: { id: number; email: string } }) {
+  const { data: habits } = useHabits();
   const [activeView, setActiveView] = useState<'list' | 'timer' | 'sessions' | 'rankings'>('list');
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
 
-  const fetchHabits = useCallback(async () => {
-    const res = await fetch('/api/habits');
-    if (res.ok) {
-      const data = await res.json();
-      setHabits(data.habits);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchHabits(); }, [fetchHabits]);
+  const addHabit = useAddHabit();
+  const deleteHabit = useDeleteHabit();
+  const startTimer = useStartTimer();
+  const stopTimer = useStopTimer();
+  const logout = useLogout();
 
   function handleStartClick(habitId: number) {
     setPendingHabitId(habitId);
   }
 
-  async function handleStartConfirm(targetDurationSeconds?: number) {
+  function handleStartConfirm(targetDurationSeconds?: number) {
     if (pendingHabitId === null) return;
-    const res = await fetch('/api/timer/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: pendingHabitId, targetDurationSeconds }),
+    startTimer.mutate(
+      { habitId: pendingHabitId, targetDurationSeconds },
+      {
+        onSuccess: () => {
+          setPendingHabitId(null);
+          setActiveView('timer');
+        },
+      },
+    );
+  }
+
+  function handleStop() {
+    stopTimer.mutate(undefined, {
+      onSuccess: () => setActiveView('list'),
     });
-    if (!res.ok) return;
-    await fetchHabits();
-    setPendingHabitId(null);
-    setActiveView('timer');
   }
 
-  async function handleStop() {
-    const res = await fetch('/api/timer/stop', { method: 'POST' });
-    if (!res.ok) return;
-    await fetchHabits();
-    setActiveView('list');
+  function handleDelete(habitId: number) {
+    deleteHabit.mutate(habitId);
   }
 
-  async function handleDelete(habitId: number) {
-    const res = await fetch(`/api/habits/${habitId}`, { method: 'DELETE' });
-    if (!res.ok) return;
-    fetchHabits();
-  }
-
-  async function handleAdd(name: string) {
-    const res = await fetch('/api/habits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    if (!res.ok) return;
-    fetchHabits();
+  function handleAdd(name: string) {
+    addHabit.mutate(name);
   }
 
   function handleLogClick(habitId: number) {
     setLoggingHabitId(habitId);
   }
 
-  async function handleLogSave() {
+  function handleLogSave() {
     setLoggingHabitId(null);
-    await fetchHabits();
   }
 
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    onLogout();
+  function handleLogout() {
+    logout.mutate();
   }
 
   const activeHabit = habits.find(h => h.activeTimer);
@@ -162,14 +147,16 @@ export function Dashboard({ user, onLogout }: { user: { id: number; email: strin
         )}
 
         {activeView === 'rankings' ? (
-          <RankingsView />
+          <Suspense fallback={<Spinner />}>
+            <RankingsView />
+          </Suspense>
         ) : activeView === 'sessions' ? (
-          <SessionsView habits={habits.map(h => ({ id: h.id, name: h.name }))} />
+          <Suspense fallback={<Spinner />}>
+            <SessionsView habits={habits.map(h => ({ id: h.id, name: h.name }))} />
+          </Suspense>
         ) : (
           <>
-            {loading ? (
-              <p className="text-center text-muted-foreground">Loading...</p>
-            ) : habits.length === 0 ? (
+            {habits.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">Start by adding your first habit</p>
               </div>

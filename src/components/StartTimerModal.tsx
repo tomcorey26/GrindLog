@@ -38,7 +38,7 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
         <p className="text-muted-foreground mb-8">Choose timer mode</p>
 
         <div className="flex flex-col gap-3 w-full max-w-xs">
-          <Button size="lg" className="w-full py-6 text-lg" onClick={() => { trigger('medium'); onStart(); }}>
+          <Button size="lg" className="w-full py-6 text-lg shadow-[0_5px_0_0_color-mix(in_srgb,var(--primary)_70%,black)] active:shadow-none active:translate-y-[5px] transition-all" onClick={() => { trigger('medium'); onStart(); }}>
             Stopwatch
           </Button>
           <Button
@@ -100,7 +100,7 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
 
       <Button
         size="lg"
-        className="w-full max-w-xs py-6 text-lg"
+        className="w-full max-w-xs py-6 text-lg shadow-[0_5px_0_0_color-mix(in_srgb,var(--primary)_70%,black)] active:shadow-none active:translate-y-[5px] transition-all"
         disabled={selectedSeconds === null}
         onClick={() => {
           if (selectedSeconds !== null) {

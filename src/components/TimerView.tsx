@@ -120,7 +120,7 @@ export function TimerView({
           )}
         </div>
 
-        <Button size="lg" onClick={handleStop} className="px-12 py-6 text-lg">
+        <Button size="lg" onClick={handleStop} className="px-12 py-6 text-lg shadow-[0_5px_0_0_color-mix(in_srgb,var(--primary)_70%,black)] active:shadow-none active:translate-y-[5px] transition-all">
           Stop
         </Button>
       </div>

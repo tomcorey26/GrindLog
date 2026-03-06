@@ -130,7 +130,7 @@ export function TimerView({
           Today total: {formatTime(todaySeconds)}
         </p>
         <p className="text-sm text-muted-foreground">
-          {streak > 0 ? `${streak} day streak` : "No streak yet"}
+          {streak > 0 ? `🔥 ${streak} day streak` : "No streak yet"}
         </p>
       </footer>
     </FullHeight>

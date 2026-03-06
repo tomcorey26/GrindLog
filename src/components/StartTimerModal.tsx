@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useHaptics } from '@/hooks/use-haptics';
-import { FullHeight } from '@/components/ui/full-height';
 
 type Props = {
   habitName: string;
@@ -34,7 +33,7 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
 
   if (mode === 'select') {
     return (
-      <FullHeight className="items-center justify-center">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-4">
         <h2 className="text-2xl font-bold mb-2">{habitName}</h2>
         <p className="text-muted-foreground mb-8">Choose timer mode</p>
 
@@ -58,13 +57,13 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
         >
           Cancel
         </button>
-      </FullHeight>
+      </div>
     );
   }
 
   // Countdown mode
   return (
-    <FullHeight className="items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-4">
       <h2 className="text-2xl font-bold mb-2">{habitName}</h2>
       <p className="text-muted-foreground mb-8">Set countdown duration</p>
 
@@ -123,6 +122,6 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
       >
         Back
       </button>
-    </FullHeight>
+    </div>
   );
 }

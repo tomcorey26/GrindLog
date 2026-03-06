@@ -1,13 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { HabitCard } from '@/components/HabitCard';
-import { AddHabitForm } from '@/components/AddHabitForm';
-import { StartTimerModal } from '@/components/StartTimerModal';
-import { LogSessionModal } from '@/components/LogSessionModal';
-import { useHabits, useAddHabit, useDeleteHabit, useStartTimer } from '@/hooks/use-habits';
-import type { Habit } from '@/lib/types';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { HabitCard } from "@/components/HabitCard";
+import { AddHabitForm } from "@/components/AddHabitForm";
+import { StartTimerModal } from "@/components/StartTimerModal";
+import { LogSessionModal } from "@/components/LogSessionModal";
+import {
+  useHabits,
+  useAddHabit,
+  useDeleteHabit,
+  useStartTimer,
+} from "@/hooks/use-habits";
+import type { Habit } from "@/lib/types";
 
 export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
   const { data: habits } = useHabits(initialHabits);
@@ -29,8 +34,7 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
       { habitId: pendingHabitId, targetDurationSeconds },
       {
         onSuccess: () => {
-          setPendingHabitId(null);
-          router.push('/timer');
+          router.push("/timer");
         },
       },
     );
@@ -52,9 +56,9 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
     setLoggingHabitId(null);
   }
 
-  const activeHabit = habits.find(h => h.activeTimer);
-  const pendingHabit = habits.find(h => h.id === pendingHabitId);
-  const loggingHabit = habits.find(h => h.id === loggingHabitId);
+  const activeHabit = habits.find((h) => h.activeTimer);
+  const pendingHabit = habits.find((h) => h.id === pendingHabitId);
+  const loggingHabit = habits.find((h) => h.id === loggingHabitId);
 
   if (pendingHabitId && pendingHabit) {
     return (
@@ -83,18 +87,37 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
 
       {habits.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Start by adding your first habit</p>
+          <p className="text-muted-foreground mb-4">
+            Start by adding your first habit
+          </p>
         </div>
       ) : (
         <div className="space-y-3 mb-6">
           {activeHabit && (
-            <div onClick={() => router.push('/timer')} className="cursor-pointer">
-              <HabitCard key={activeHabit.id} habit={activeHabit} onStart={handleStartClick} onDelete={handleDelete} onLog={handleLogClick} />
+            <div
+              onClick={() => router.push("/timer")}
+              className="cursor-pointer"
+            >
+              <HabitCard
+                key={activeHabit.id}
+                habit={activeHabit}
+                onStart={handleStartClick}
+                onDelete={handleDelete}
+                onLog={handleLogClick}
+              />
             </div>
           )}
-          {habits.filter(h => !h.activeTimer).map((habit) => (
-            <HabitCard key={habit.id} habit={habit} onStart={handleStartClick} onDelete={handleDelete} onLog={handleLogClick} />
-          ))}
+          {habits
+            .filter((h) => !h.activeTimer)
+            .map((habit) => (
+              <HabitCard
+                key={habit.id}
+                habit={habit}
+                onStart={handleStartClick}
+                onDelete={handleDelete}
+                onLog={handleLogClick}
+              />
+            ))}
         </div>
       )}
     </>

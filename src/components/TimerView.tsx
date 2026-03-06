@@ -11,6 +11,7 @@ import {
 } from "@/lib/format";
 import { useStopTimer } from "@/hooks/use-habits";
 import { useHaptics } from "@/hooks/use-haptics";
+import { FullHeight } from "@/components/ui/full-height";
 
 type Props = {
   habitName: string;
@@ -91,8 +92,8 @@ export function TimerView({
   }, [finished]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="flex items-center justify-between px-4 py-4 relative z-10">
+    <FullHeight>
+      <header className="flex items-center justify-between py-4">
         <button onClick={handleBack} className="text-muted-foreground text-sm">
           &larr; Back
         </button>
@@ -100,7 +101,7 @@ export function TimerView({
         <div className="w-12" />
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
+      <div className="flex-1 flex flex-col items-center justify-center">
         <p className="text-6xl font-mono font-light tracking-tight mb-3">
           {display}
         </p>
@@ -124,7 +125,7 @@ export function TimerView({
         </Button>
       </div>
 
-      <footer className="px-4 pb-[max(2rem,env(safe-area-inset-bottom))] text-center space-y-1">
+      <footer className="pb-2 text-center space-y-1">
         <p className="text-sm text-muted-foreground">
           Today total: {formatTime(todaySeconds)}
         </p>
@@ -132,6 +133,6 @@ export function TimerView({
           {streak > 0 ? `${streak} day streak` : "No streak yet"}
         </p>
       </footer>
-    </div>
+    </FullHeight>
   );
 }

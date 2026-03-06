@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { PressableButton } from "@/components/ui/pressable-button";
 import {
   formatTime,
   formatElapsed,
@@ -120,9 +120,9 @@ export function TimerView({
           )}
         </div>
 
-        <Button size="lg" onClick={handleStop} className="px-12 py-6 text-lg shadow-[0_5px_0_0_color-mix(in_srgb,var(--primary)_70%,black)] active:shadow-none active:translate-y-[5px] transition-all">
+        <PressableButton size="lg" onClick={handleStop} className="px-12 py-6 text-lg">
           Stop
-        </Button>
+        </PressableButton>
       </div>
 
       <footer className="pb-2 text-center space-y-1">

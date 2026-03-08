@@ -42,7 +42,7 @@ export function useStartTimer() {
 export function useStopTimer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => api('/api/timer/stop', { method: 'POST' }),
+    mutationFn: () => api<{ durationSeconds: number; habitId: number }>('/api/timer/stop', { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });

@@ -9,6 +9,7 @@ import {
   formatRemaining,
   isCountdownComplete,
 } from "@/lib/format";
+import { getRandomCongratsMessage } from "@/lib/congrats-messages";
 import { useStopTimer } from "@/hooks/use-habits";
 import { useHaptics } from "@/hooks/use-haptics";
 import { FullHeight } from "@/components/ui/full-height";
@@ -20,6 +21,15 @@ type Props = {
   todaySeconds: number;
   streak: number;
 };
+
+function playFanfare() {
+  try {
+    const audio = new Audio("/fanfare.mp3");
+    audio.play().catch(() => {});
+  } catch {
+    // Ignore audio errors
+  }
+}
 
 export function TimerView({
   habitName,
@@ -43,10 +53,22 @@ export function TimerView({
   );
   const autoStopTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [successData, setSuccessData] = useState<{
+    durationSeconds: number;
+    message: string;
+  } | null>(null);
+
   function handleStop() {
     trigger("buzz");
     stopTimer.mutate(undefined, {
-      onSuccess: () => router.push("/dashboard"),
+      onSuccess: (data) => {
+        setSuccessData({
+          durationSeconds: data.durationSeconds,
+          message: getRandomCongratsMessage(),
+        });
+        playFanfare();
+        trigger("buzz");
+      },
     });
   }
 
@@ -90,6 +112,33 @@ export function TimerView({
       }
     };
   }, [finished]);
+
+  if (successData) {
+    return (
+      <FullHeight>
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+          <p className="text-6xl mb-6">&#127942;</p>
+          <h1 className="text-2xl font-bold mb-3">Session Complete!</h1>
+          <p className="text-lg text-muted-foreground mb-6 max-w-xs">
+            {successData.message}
+          </p>
+          <p className="text-4xl font-mono font-light tracking-tight mb-2">
+            {formatTime(successData.durationSeconds)}
+          </p>
+          <p className="text-sm text-muted-foreground mb-10">
+            of {habitName}
+          </p>
+          <PressableButton
+            size="lg"
+            onClick={handleBack}
+            className="px-12 py-6 text-lg"
+          >
+            Back to Habits
+          </PressableButton>
+        </div>
+      </FullHeight>
+    );
+  }
 
   return (
     <FullHeight>

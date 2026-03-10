@@ -14,13 +14,24 @@ import { useStopTimer } from "@/hooks/use-habits";
 import { useHaptics } from "@/hooks/use-haptics";
 import { FullHeight } from "@/components/ui/full-height";
 
-const BUBBLE_EMOJIS = ["🎉", "⭐", "🔥", "💪", "✨", "🏆", "🎯", "💥", "🙌", "👏"];
+const BUBBLE_EMOJIS = [
+  "🎉",
+  "⭐",
+  "🔥",
+  "💪",
+  "✨",
+  "🏆",
+  "🎯",
+  "💥",
+  "🙌",
+  "👏",
+];
 
 function EmojiBubbles() {
   const bubbles = useMemo(() => {
     return Array.from({ length: 14 }, (_, i) => ({
       emoji: BUBBLE_EMOJIS[i % BUBBLE_EMOJIS.length],
-      left: `${5 + (i * 7) % 90}%`,
+      left: `${5 + ((i * 7) % 90)}%`,
       duration: 2.5 + (i % 4) * 0.6,
       delay: (i % 7) * 0.4,
       size: 1.2 + (i % 3) * 0.5,
@@ -159,9 +170,7 @@ export function TimerView({
           <p className="text-4xl font-mono font-light tracking-tight mb-2">
             {formatTime(successData.durationSeconds)}
           </p>
-          <p className="text-sm text-muted-foreground mb-10">
-            of {habitName}
-          </p>
+          <p className="text-sm text-muted-foreground mb-10">of {habitName}</p>
           <PressableButton
             size="lg"
             onClick={handleBack}
@@ -203,8 +212,12 @@ export function TimerView({
           )}
         </div>
 
-        <PressableButton size="lg" onClick={handleStop} className="px-12 py-6 text-lg">
-          Stop
+        <PressableButton
+          size="lg"
+          onClick={handleStop}
+          className="px-12 py-6 text-lg"
+        >
+          End Session {isCountdown ? "Early" : ""}
         </PressableButton>
       </div>
 

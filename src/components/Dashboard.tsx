@@ -7,6 +7,16 @@ import { AddHabitForm } from "@/components/AddHabitForm";
 import { StartTimerModal } from "@/components/StartTimerModal";
 import { LogSessionModal } from "@/components/LogSessionModal";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   useHabits,
   useAddHabit,
   useDeleteHabit,
@@ -17,6 +27,7 @@ import type { Habit } from "@/lib/types";
 export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
   const { data: habits } = useHabits(initialHabits);
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
+  const [switchConfirmHabitId, setSwitchConfirmHabitId] = useState<number | null>(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
   const router = useRouter();
 
@@ -25,6 +36,11 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
   const startTimer = useStartTimer();
 
   function handleStartClick(habitId: number) {
+    const activeHabit = habits.find((h) => h.activeTimer);
+    if (activeHabit && activeHabit.id !== habitId) {
+      setSwitchConfirmHabitId(habitId);
+      return;
+    }
     setPendingHabitId(habitId);
   }
 
@@ -58,6 +74,7 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
 
   const activeHabit = habits.find((h) => h.activeTimer);
   const pendingHabit = habits.find((h) => h.id === pendingHabitId);
+  const switchConfirmHabit = habits.find((h) => h.id === switchConfirmHabitId);
   const loggingHabit = habits.find((h) => h.id === loggingHabitId);
 
   if (pendingHabitId && pendingHabit) {
@@ -72,6 +89,37 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
 
   return (
     <>
+      <AlertDialog
+        open={!!switchConfirmHabit}
+        onOpenChange={(open) => {
+          if (!open) setSwitchConfirmHabitId(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch timer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your <span className="font-semibold">{activeHabit?.name}</span> session is still running. Starting{" "}
+              <span className="font-semibold">{switchConfirmHabit?.name}</span> will end that session and save your progress.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="default"
+              onClick={() => {
+                if (switchConfirmHabitId !== null) {
+                  setPendingHabitId(switchConfirmHabitId);
+                  setSwitchConfirmHabitId(null);
+                }
+              }}
+            >
+              Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {loggingHabit && (
         <LogSessionModal
           habitId={loggingHabit.id}

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PressableButton } from '@/components/ui/pressable-button';
 import { useHaptics } from '@/hooks/use-haptics';
-import { getTimerPreference, saveTimerPreference } from '@/lib/timer-preferences';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { TimerPreference } from '@/lib/timer-preferences';
 
 type Props = {
   habitName: string;
@@ -19,21 +20,18 @@ const PRESETS = [
   { label: '60m', minutes: 60 },
 ];
 
+const DEFAULT_PREF: TimerPreference = { mode: 'stopwatch', durationMinutes: 25 };
+
 export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
   const { trigger } = useHaptics();
-  const [mode, setMode] = useState<'stopwatch' | 'countdown'>('stopwatch');
-  const [minutes, setMinutes] = useState('25');
-
-  useEffect(() => {
-    const pref = getTimerPreference();
-    setMode(pref.mode);
-    setMinutes(String(pref.durationMinutes));
-  }, []);
+  const [pref, setPref] = useLocalStorage<TimerPreference>('timer-mode-preference', DEFAULT_PREF);
+  const [mode, setMode] = useState<'stopwatch' | 'countdown'>(pref.mode);
+  const [minutes, setMinutes] = useState(String(pref.durationMinutes));
 
   function handleStart() {
     trigger('medium');
     const durationMinutes = Math.max(1, Math.floor(Number(minutes)));
-    saveTimerPreference({
+    setPref({
       mode,
       durationMinutes: mode === 'countdown' ? durationMinutes : Number(minutes) || 25,
     });

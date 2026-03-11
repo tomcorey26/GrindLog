@@ -135,6 +135,14 @@ export function TimerView({
   }, [startTime, targetDurationSeconds, isCountdown]);
 
   useEffect(() => {
+    const prev = document.title;
+    document.title = `${display} — ${habitName}`;
+    return () => {
+      document.title = prev;
+    };
+  }, [display, habitName]);
+
+  useEffect(() => {
     if (!finished) return;
 
     trigger("buzz");

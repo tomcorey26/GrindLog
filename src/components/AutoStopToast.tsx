@@ -12,19 +12,23 @@ export function AutoStopToast() {
   const shown = useRef(false);
 
   useEffect(() => {
-    if (shown.current) return;
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      if (shown.current) return;
 
-    const data = queryClient.getQueryData<{
-      habits: unknown[];
-      autoStopped: AutoStoppedSession | null;
-    }>(queryKeys.habits.all);
+      const data = queryClient.getQueryData<{
+        habits: unknown[];
+        autoStopped: AutoStoppedSession | null;
+      }>(queryKeys.habits.all);
 
-    if (data?.autoStopped) {
-      shown.current = true;
-      toast.success(
-        `🎉 Your ${formatTime(data.autoStopped.durationSeconds)} ${data.autoStopped.habitName} session was auto-recorded`
-      );
-    }
+      if (data?.autoStopped) {
+        shown.current = true;
+        toast.success(
+          `🎉 Your ${formatTime(data.autoStopped.durationSeconds)} ${data.autoStopped.habitName} session was auto-recorded`
+        );
+      }
+    });
+
+    return unsubscribe;
   }, [queryClient]);
 
   return null;

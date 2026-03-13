@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { PressableButton } from "@/components/ui/pressable-button";
-import {
-  formatTime,
-  formatElapsed,
-  formatRemaining,
-  isCountdownComplete,
-} from "@/lib/format";
+import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
 import { getRandomCongratsMessage } from "@/lib/congrats-messages";
 import { useStopTimer } from "@/hooks/use-habits";
 import { useHaptics } from "@/hooks/use-haptics";
@@ -92,11 +87,6 @@ export function TimerView({
       ? formatRemaining(startTime, targetDurationSeconds)
       : formatElapsed(startTime),
   );
-  const [finished, setFinished] = useState(() =>
-    isCountdown ? isCountdownComplete(startTime, targetDurationSeconds) : false,
-  );
-  const autoStopTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [successData, setSuccessData] = useState<{
     durationSeconds: number;
     message: string;
@@ -124,9 +114,6 @@ export function TimerView({
     const interval = setInterval(() => {
       if (isCountdown) {
         setDisplay(formatRemaining(startTime, targetDurationSeconds));
-        if (isCountdownComplete(startTime, targetDurationSeconds)) {
-          setFinished(true);
-        }
       } else {
         setDisplay(formatElapsed(startTime));
       }
@@ -141,29 +128,6 @@ export function TimerView({
       document.title = prev;
     };
   }, [display, habitName]);
-
-  useEffect(() => {
-    if (!finished) return;
-
-    trigger("buzz");
-
-    try {
-      const audio = new Audio("/alarm.mp3");
-      audio.play().catch(() => {});
-    } catch {
-      // Ignore audio errors
-    }
-
-    autoStopTimeout.current = setTimeout(() => {
-      handleStop();
-    }, 2000);
-
-    return () => {
-      if (autoStopTimeout.current) {
-        clearTimeout(autoStopTimeout.current);
-      }
-    };
-  }, [finished]);
 
   if (successData) {
     return (
@@ -206,7 +170,7 @@ export function TimerView({
           {display}
         </p>
         <div className="flex items-center gap-2 mb-12">
-          {finished ? (
+          {isCountdown && display === "00:00:00" ? (
             <span className="text-sm font-semibold text-primary">
               Time&apos;s up!
             </span>

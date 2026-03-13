@@ -10,8 +10,8 @@ export default async function TimerPage() {
   const habits = await getHabitsForUser(userId);
   const activeHabit = habits.find(h => h.activeTimer);
 
-  // No active timer — redirect back to dashboard
-  if (!activeHabit) redirect('/dashboard');
+  // No active timer — redirect back to skills
+  if (!activeHabit) redirect('/skills');
 
   return (
     <TimerView

@@ -51,7 +51,7 @@ export function AuthForm() {
     mutation.mutate(data, {
       onSuccess: () => {
         trigger('success');
-        router.push('/dashboard');
+        router.push('/skills');
       },
       onError: (err) => {
         trigger('error');

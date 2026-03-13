@@ -5,7 +5,7 @@ import { Dashboard } from '@/components/Dashboard';
 import { Suspense } from 'react';
 import { Spinner } from '@/components/Spinner';
 
-export default async function DashboardPage() {
+export default async function SkillsPage() {
   const userId = await getSessionUserId();
   if (!userId) redirect('/login');
 

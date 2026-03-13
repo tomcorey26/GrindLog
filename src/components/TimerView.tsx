@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { PressableButton } from "@/components/ui/pressable-button";
 import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
+import { isCountdownComplete } from "@/lib/timer";
 import { getRandomCongratsMessage } from "@/lib/congrats-messages";
 import { useStopTimer } from "@/hooks/use-habits";
 import { useHaptics } from "@/hooks/use-haptics";
@@ -87,6 +88,7 @@ export function TimerView({
       ? formatRemaining(startTime, targetDurationSeconds)
       : formatElapsed(startTime),
   );
+  const stoppedRef = useRef(false);
   const [successData, setSuccessData] = useState<{
     durationSeconds: number;
     message: string;
@@ -114,6 +116,10 @@ export function TimerView({
     const interval = setInterval(() => {
       if (isCountdown) {
         setDisplay(formatRemaining(startTime, targetDurationSeconds));
+        if (!stoppedRef.current && isCountdownComplete(startTime, targetDurationSeconds)) {
+          stoppedRef.current = true;
+          handleStop();
+        }
       } else {
         setDisplay(formatElapsed(startTime));
       }

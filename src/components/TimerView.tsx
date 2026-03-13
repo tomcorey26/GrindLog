@@ -104,6 +104,13 @@ export function TimerView({
         });
         playFanfare();
         trigger("buzz");
+        if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification('🎉 Session Complete', {
+              body: `Your ${formatTime(data.durationSeconds)} ${habitName} session was recorded`,
+            });
+          } catch {}
+        }
       },
     });
   }

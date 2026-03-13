@@ -6,11 +6,22 @@ import { AutoStopToastTrigger } from '@/components/AutoStopToast';
 import { Suspense } from 'react';
 import { Spinner } from '@/components/Spinner';
 
-export default async function SkillsPage() {
+type Props = {
+  searchParams: Promise<{ autoStopped?: string; duration?: string }>;
+};
+
+export default async function SkillsPage({ searchParams }: Props) {
   const userId = await getSessionUserId();
   if (!userId) redirect('/login');
 
-  const autoStopped = await autoStopExpiredCountdown(userId);
+  const params = await searchParams;
+
+  // Check search params first (redirected from /timer after auto-stop)
+  // Otherwise check DB directly (user navigated to /skills with an expired timer)
+  const autoStopped = params.autoStopped && params.duration
+    ? { habitName: params.autoStopped, durationSeconds: Number(params.duration) }
+    : await autoStopExpiredCountdown(userId);
+
   const habits = await getHabitsForUser(userId);
 
   return (

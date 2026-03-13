@@ -5,6 +5,7 @@ import { TabNav } from '@/components/TabNav';
 import { LogoutButton } from '@/components/LogoutButton';
 import { buttonVariants } from '@/components/ui/button';
 import { AutoStopToast } from '@/components/AutoStopToast';
+import { CountdownAutoStop } from '@/components/CountdownAutoStop';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,6 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         <Toaster position="top-center" />
         <AutoStopToast />
+        <CountdownAutoStop />
       </div>
     </Providers>
   );

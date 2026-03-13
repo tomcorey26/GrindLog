@@ -1,1 +1,7 @@
 - Create a design document for the patterns you want followed for nextjs projects. use speech islands as a reference
+- Put logic into pure functions when you can so that they can be tested
+- Alwasy make sure the user understands what you are doing
+- always write a test before you start. End to end and unit
+- always run tests after your done so you dindt break any thing
+- always split new work into a worktree or branch outside of git
+- Follow engineering best practices for performant and seucre software

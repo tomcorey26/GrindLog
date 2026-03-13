@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Toaster } from 'sonner';
 import { Providers } from '@/components/Providers';
 import { TabNav } from '@/components/TabNav';
 import { LogoutButton } from '@/components/LogoutButton';
@@ -25,6 +26,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {children}
           </main>
         </div>
+        <Toaster position="top-center" />
       </div>
     </Providers>
   );

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/db';
-import { users } from '@/db/schema';
 import { hashPassword, setSessionCookie } from '@/lib/auth';
-import { eq } from 'drizzle-orm';
+import { createUser, getUserByEmail } from '@/server/db/users';
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -24,14 +22,13 @@ export async function POST(request: Request) {
 
   const { email, password } = parsed.data;
 
-  const existing = await db.select().from(users).where(eq(users.email, email)).get();
+  const existing = await getUserByEmail(email);
   if (existing) {
     return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
   }
 
   const passwordHash = await hashPassword(password);
-  const result = await db.insert(users).values({ email, passwordHash }).returning();
-  const user = result[0];
+  const user = await createUser(email, passwordHash);
 
   await setSessionCookie(user.id);
   return NextResponse.json({ id: user.id, email: user.email });

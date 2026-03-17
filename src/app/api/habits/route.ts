@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/db';
-import { habits } from '@/db/schema';
 import { getSessionUserId } from '@/lib/auth';
-import { getHabitsForUser, autoStopExpiredCountdown } from '@/lib/queries';
+import { createHabitForUser, getHabitsForUser } from '@/server/db/habits';
+import { autoStopExpiredCountdown } from '@/server/db/timers';
 
 const createHabitSchema = z.object({
   name: z.string().min(1).max(100),
@@ -33,6 +32,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 });
   }
 
-  const result = await db.insert(habits).values({ userId, name: parsed.data.name }).returning();
-  return NextResponse.json({ habit: result[0] }, { status: 201 });
+  const habit = await createHabitForUser(userId, parsed.data.name);
+  return NextResponse.json({ habit }, { status: 201 });
 }

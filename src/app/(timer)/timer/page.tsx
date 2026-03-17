@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSessionUserId } from '@/lib/auth';
-import { getHabitsForUser, autoStopExpiredCountdown } from '@/lib/queries';
 import { TimerView } from '@/components/TimerView';
+import { getHabitsForUser } from '@/server/db/habits';
+import { autoStopExpiredCountdown } from '@/server/db/timers';
 
 export default async function TimerPage() {
   const userId = await getSessionUserId();

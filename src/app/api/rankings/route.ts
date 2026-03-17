@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { getRankingsForUser } from '@/lib/queries';
+import { getRankingsForUser } from '@/server/db/rankings';
 
 export async function GET() {
   const userId = await getSessionUserId();

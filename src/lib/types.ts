@@ -7,6 +7,11 @@ export type Habit = {
   activeTimer: { startTime: string; targetDurationSeconds: number | null } | null;
 };
 
+export type AutoStoppedSession = {
+  habitName: string;
+  durationSeconds: number;
+};
+
 export type Session = {
   id: number;
   habitName: string;

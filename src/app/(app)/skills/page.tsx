@@ -15,14 +15,20 @@ export default async function SkillsPage({ searchParams }: Props) {
   if (!userId) redirect('/login');
 
   const params = await searchParams;
-
-  // Check search params first (redirected from /timer after auto-stop)
-  // Otherwise check DB directly (user navigated to /skills with an expired timer)
-  const autoStopped = params.autoStopped && params.duration
-    ? { habitName: params.autoStopped, durationSeconds: Number(params.duration) }
-    : await autoStopExpiredCountdown(userId);
-
   const habits = await getHabitsForUser(userId);
+
+  // If redirected from /timer after auto-stop, validate params against user's actual habits
+  // to prevent crafted URLs from showing misleading toast messages.
+  // Otherwise check DB for expired timers (user navigated to /skills directly).
+  let autoStopped: { habitName: string; durationSeconds: number } | null = null;
+  if (params.autoStopped && params.duration) {
+    const isValidHabit = habits.some(h => h.name === params.autoStopped);
+    if (isValidHabit) {
+      autoStopped = { habitName: params.autoStopped, durationSeconds: Number(params.duration) };
+    }
+  } else {
+    autoStopped = await autoStopExpiredCountdown(userId);
+  }
 
   return (
     <Suspense fallback={<Spinner />}>

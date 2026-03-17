@@ -22,16 +22,26 @@ function sendBrowserNotification(title: string, body: string) {
 export function CountdownAutoStop() {
   const queryClient = useQueryClient();
   const stoppingRef = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
+    function getActiveCountdown() {
+      const data = queryClient.getQueryData<{ habits: Habit[] }>(queryKeys.habits.all);
+      return data?.habits.find(h => h.activeTimer?.targetDurationSeconds) ?? null;
+    }
+
+    async function checkAndStop() {
       if (stoppingRef.current) return;
 
-      const data = queryClient.getQueryData<{ habits: Habit[] }>(queryKeys.habits.all);
-      if (!data) return;
-
-      const active = data.habits.find(h => h.activeTimer);
-      if (!active?.activeTimer?.targetDurationSeconds) return;
+      const active = getActiveCountdown();
+      if (!active?.activeTimer?.targetDurationSeconds) {
+        // No active countdown — stop polling
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        return;
+      }
 
       const { startTime, targetDurationSeconds } = active.activeTimer;
       if (!isCountdownComplete(startTime, targetDurationSeconds)) return;
@@ -53,9 +63,30 @@ export function CountdownAutoStop() {
       } finally {
         stoppingRef.current = false;
       }
-    }, 1000);
+    }
 
-    return () => clearInterval(interval);
+    function startPolling() {
+      if (intervalRef.current) return;
+      intervalRef.current = setInterval(checkAndStop, 1000);
+    }
+
+    // Subscribe to query cache changes to start polling when a countdown becomes active
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.query.queryKey[0] !== 'habits') return;
+      if (getActiveCountdown() && !intervalRef.current) {
+        startPolling();
+      }
+    });
+
+    // Start polling immediately if there's already an active countdown
+    if (getActiveCountdown()) {
+      startPolling();
+    }
+
+    return () => {
+      unsubscribe();
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [queryClient]);
 
   return null;

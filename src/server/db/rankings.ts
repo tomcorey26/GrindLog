@@ -1,7 +1,7 @@
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from "drizzle-orm";
 
-import { db } from '@/db';
-import { habits, timeSessions } from '@/db/schema';
+import { db } from "@/db";
+import { habits, timeSessions } from "@/db/schema";
 
 export async function getRankingsForUser(userId: number) {
   const totalSecondsExpr = sql<number>`sum(${timeSessions.durationSeconds})`;
@@ -10,7 +10,7 @@ export async function getRankingsForUser(userId: number) {
     .select({
       habitId: habits.id,
       habitName: habits.name,
-      totalSeconds: totalSecondsExpr.as('total_seconds'),
+      totalSeconds: totalSecondsExpr.as("total_seconds"),
     })
     .from(timeSessions)
     .innerJoin(habits, eq(timeSessions.habitId, habits.id))

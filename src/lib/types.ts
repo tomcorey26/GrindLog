@@ -4,7 +4,10 @@ export type Habit = {
   todaySeconds: number;
   totalSeconds: number;
   streak: number;
-  activeTimer: { startTime: string; targetDurationSeconds: number | null } | null;
+  activeTimer: {
+    startTime: string;
+    targetDurationSeconds: number | null;
+  } | null;
 };
 
 export type AutoStoppedSession = {

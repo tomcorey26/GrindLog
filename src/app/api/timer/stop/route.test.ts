@@ -22,7 +22,10 @@ describe("POST /api/timer/stop", () => {
 
   it("returns the stopped timer payload from the db module", async () => {
     getSessionUserId.mockResolvedValue(42);
-    stopActiveTimerForUser.mockResolvedValue({ durationSeconds: 1800, habitId: 7 });
+    stopActiveTimerForUser.mockResolvedValue({
+      durationSeconds: 1800,
+      habitId: 7,
+    });
 
     const response = await POST();
 

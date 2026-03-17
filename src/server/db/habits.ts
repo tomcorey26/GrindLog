@@ -1,8 +1,8 @@
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte, sql } from "drizzle-orm";
 
-import { db } from '@/db';
-import { activeTimers, habits, timeSessions } from '@/db/schema';
-import type { Habit } from '@/lib/types';
+import { db } from "@/db";
+import { activeTimers, habits, timeSessions } from "@/db/schema";
+import type { Habit } from "@/lib/types";
 
 export async function getHabitsForUser(userId: number): Promise<Habit[]> {
   const todayStart = new Date();
@@ -17,12 +17,21 @@ export async function getHabitsForUser(userId: number): Promise<Habit[]> {
     userHabits.map(async (habit) => {
       const [todayResult, totalResult, timer, streak] = await Promise.all([
         db
-          .select({ total: sql<number>`COALESCE(SUM(${timeSessions.durationSeconds}), 0)` })
+          .select({
+            total: sql<number>`COALESCE(SUM(${timeSessions.durationSeconds}), 0)`,
+          })
           .from(timeSessions)
-          .where(and(eq(timeSessions.habitId, habit.id), gte(timeSessions.endTime, todayStart)))
+          .where(
+            and(
+              eq(timeSessions.habitId, habit.id),
+              gte(timeSessions.endTime, todayStart),
+            ),
+          )
           .get(),
         db
-          .select({ total: sql<number>`COALESCE(SUM(${timeSessions.durationSeconds}), 0)` })
+          .select({
+            total: sql<number>`COALESCE(SUM(${timeSessions.durationSeconds}), 0)`,
+          })
           .from(timeSessions)
           .where(eq(timeSessions.habitId, habit.id))
           .get(),
@@ -47,7 +56,7 @@ export async function getHabitsForUser(userId: number): Promise<Habit[]> {
             }
           : null,
       };
-    })
+    }),
   );
 }
 
@@ -75,7 +84,9 @@ export async function deleteHabitForUser(habitId: number, userId: number) {
 
 async function computeStreak(habitId: number): Promise<number> {
   const rows = await db
-    .select({ date: sql<string>`DATE(${timeSessions.endTime}, 'unixepoch', 'localtime')` })
+    .select({
+      date: sql<string>`DATE(${timeSessions.endTime}, 'unixepoch', 'localtime')`,
+    })
     .from(timeSessions)
     .where(eq(timeSessions.habitId, habitId))
     .groupBy(sql`DATE(${timeSessions.endTime}, 'unixepoch', 'localtime')`)
@@ -90,7 +101,9 @@ async function computeStreak(habitId: number): Promise<number> {
 
   for (const row of rows) {
     const rowDate = new Date(`${row.date}T00:00:00`);
-    const diffDays = Math.round((expected.getTime() - rowDate.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(
+      (expected.getTime() - rowDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     if (diffDays === 0) {
       streak++;

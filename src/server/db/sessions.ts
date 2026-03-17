@@ -1,8 +1,8 @@
-import { and, desc, eq, gte } from 'drizzle-orm';
+import { and, desc, eq, gte } from "drizzle-orm";
 
-import { db } from '@/db';
-import { habits, timeSessions } from '@/db/schema';
-import type { Session } from '@/lib/types';
+import { db } from "@/db";
+import { habits, timeSessions } from "@/db/schema";
+import type { Session } from "@/lib/types";
 
 type SessionFilters = {
   habitId?: string;
@@ -19,12 +19,13 @@ type ManualSessionInput = {
 
 export async function getSessionsForUser(
   userId: number,
-  filters: SessionFilters
+  filters: SessionFilters,
 ): Promise<{ sessions: Session[]; totalSeconds: number }> {
   const dateFilter = getDateFilter(filters.range);
 
   const conditions = [eq(habits.userId, userId)];
-  if (filters.habitId) conditions.push(eq(timeSessions.habitId, Number(filters.habitId)));
+  if (filters.habitId)
+    conditions.push(eq(timeSessions.habitId, Number(filters.habitId)));
   if (dateFilter) conditions.push(gte(timeSessions.endTime, dateFilter));
 
   const rows = await db
@@ -76,7 +77,7 @@ export async function createManualSessionForUser({
       startTime,
       endTime,
       durationSeconds,
-      timerMode: 'manual',
+      timerMode: "manual",
     })
     .returning();
 
@@ -86,20 +87,20 @@ export async function createManualSessionForUser({
 function getDateFilter(range?: string): Date | null {
   const now = new Date();
 
-  if (range === 'today') {
+  if (range === "today") {
     const dateFilter = new Date(now);
     dateFilter.setHours(0, 0, 0, 0);
     return dateFilter;
   }
 
-  if (range === 'week') {
+  if (range === "week") {
     const dateFilter = new Date(now);
     dateFilter.setDate(dateFilter.getDate() - 7);
     dateFilter.setHours(0, 0, 0, 0);
     return dateFilter;
   }
 
-  if (range === 'month') {
+  if (range === "month") {
     const dateFilter = new Date(now);
     dateFilter.setMonth(dateFilter.getMonth() - 1);
     dateFilter.setHours(0, 0, 0, 0);

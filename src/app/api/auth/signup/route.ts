@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { hashPassword, setSessionCookie } from '@/lib/auth';
-import { createUser, getUserByEmail } from '@/server/db/users';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { hashPassword, setSessionCookie } from "@/lib/auth";
+import { createUser, getUserByEmail } from "@/server/db/users";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -13,18 +13,24 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid email or password (min 8 chars)' }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid email or password (min 8 chars)" },
+      { status: 400 },
+    );
   }
 
   const { email, password } = parsed.data;
 
   const existing = await getUserByEmail(email);
   if (existing) {
-    return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
+    return NextResponse.json(
+      { error: "Email already in use" },
+      { status: 409 },
+    );
   }
 
   const passwordHash = await hashPassword(password);

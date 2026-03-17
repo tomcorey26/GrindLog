@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyPassword, setSessionCookie } from "@/lib/auth";
-import { getUserByEmail } from '@/server/db/users';
+import { getUserByEmail } from "@/server/db/users";
 
 const loginSchema = z.object({
   email: z.email(),

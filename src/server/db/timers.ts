@@ -1,9 +1,9 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq } from "drizzle-orm";
 
-import { db } from '@/db';
-import { activeTimers, habits, timeSessions } from '@/db/schema';
-import { buildSessionFromTimer } from '@/lib/auto-stop-timer';
-import type { AutoStoppedSession } from '@/lib/types';
+import { db } from "@/db";
+import { activeTimers, habits, timeSessions } from "@/db/schema";
+import { buildSessionFromTimer } from "@/lib/auto-stop-timer";
+import type { AutoStoppedSession } from "@/lib/types";
 
 type StartTimerInput = {
   userId: number;
@@ -72,7 +72,9 @@ export async function stopActiveTimerForUser(userId: number) {
   });
 }
 
-export async function autoStopExpiredCountdown(userId: number): Promise<AutoStoppedSession | null> {
+export async function autoStopExpiredCountdown(
+  userId: number,
+): Promise<AutoStoppedSession | null> {
   return db.transaction(async (tx) => {
     const timer = await tx
       .select()
@@ -97,7 +99,7 @@ export async function autoStopExpiredCountdown(userId: number): Promise<AutoStop
     await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
 
     return {
-      habitName: habit?.name ?? 'Unknown',
+      habitName: habit?.name ?? "Unknown",
       durationSeconds: session.durationSeconds,
     };
   });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserId } from "@/lib/auth";
-import { stopActiveTimerForUser } from '@/server/db/timers';
+import { stopActiveTimerForUser } from "@/server/db/timers";
 
 export async function POST() {
   const userId = await getSessionUserId();

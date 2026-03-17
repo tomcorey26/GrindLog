@@ -5,8 +5,8 @@ import { Dashboard } from "@/components/Dashboard";
 import { AutoStopToastTrigger } from "@/components/AutoStopToast";
 import { Suspense } from "react";
 import { Spinner } from "@/components/Spinner";
-import { getHabitsForUser } from '@/server/db/habits';
-import { autoStopExpiredCountdown } from '@/server/db/timers';
+import { getHabitsForUser } from "@/server/db/habits";
+import { autoStopExpiredCountdown } from "@/server/db/timers";
 
 type Props = {
   searchParams: Promise<{ autoStopped?: string; duration?: string }>;

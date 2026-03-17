@@ -22,6 +22,19 @@ export function useSessions(filters: SessionFilters, initialData?: { sessions: S
   });
 }
 
+export function useDeleteSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: number) =>
+      api(`/api/sessions/${sessionId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rankings.all });
+    },
+  });
+}
+
 export function useLogSession() {
   const queryClient = useQueryClient();
   return useMutation({

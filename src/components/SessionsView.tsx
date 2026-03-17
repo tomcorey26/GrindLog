@@ -3,10 +3,21 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { CalendarView } from '@/components/CalendarView';
-import { List, CalendarDays } from 'lucide-react';
+import { List, CalendarDays, Trash2 } from 'lucide-react';
 import { formatTime } from '@/lib/format';
-import { useSessions } from '@/hooks/use-sessions';
+import { useSessions, useDeleteSession } from '@/hooks/use-sessions';
 import { useHaptics } from '@/hooks/use-haptics';
 import type { Session } from '@/lib/types';
 
@@ -25,6 +36,7 @@ export function SessionsView({
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const { trigger } = useHaptics();
+  const deleteSession = useDeleteSession();
 
   const initialData = initialSessions ? { sessions: initialSessions, totalSeconds: initialTotalSeconds ?? 0 } : undefined;
   const { data } = useSessions({ habitId: selectedHabitId || undefined, range: dateRange, viewMode }, initialData);
@@ -129,9 +141,40 @@ export function SessionsView({
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-medium">{session.habitName}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
-                    {session.timerMode}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
+                      {session.timerMode}
+                    </span>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          aria-label="Delete session"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete session?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete this {session.habitName} session ({formatDuration(session.durationSeconds)}). This cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              trigger('error');
+                              deleteSession.mutate(session.id);
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>{formatDate(session.endTime)}</span>

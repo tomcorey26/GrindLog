@@ -1,4 +1,4 @@
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, lt } from "drizzle-orm";
 
 import { db } from "@/db";
 import { habits, timeSessions } from "@/db/schema";
@@ -7,6 +7,8 @@ import type { Session } from "@/lib/types";
 type SessionFilters = {
   habitId?: string;
   range?: string;
+  date?: string;
+  tzOffset?: number;
 };
 
 type ManualSessionInput = {
@@ -21,12 +23,21 @@ export async function getSessionsForUser(
   userId: number,
   filters: SessionFilters,
 ): Promise<{ sessions: Session[]; totalSeconds: number }> {
-  const dateFilter = getDateFilter(filters.range);
-
   const conditions = [eq(habits.userId, userId)];
   if (filters.habitId)
     conditions.push(eq(timeSessions.habitId, Number(filters.habitId)));
-  if (dateFilter) conditions.push(gte(timeSessions.endTime, dateFilter));
+
+  if (filters.date && filters.tzOffset !== undefined) {
+    const offsetMs = filters.tzOffset * 60 * 1000;
+    const dayStart = new Date(filters.date + "T00:00:00");
+    dayStart.setTime(dayStart.getTime() + offsetMs);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    conditions.push(gte(timeSessions.startTime, dayStart));
+    conditions.push(lt(timeSessions.startTime, dayEnd));
+  } else {
+    const dateFilter = getDateFilter(filters.range);
+    if (dateFilter) conditions.push(gte(timeSessions.endTime, dateFilter));
+  }
 
   const rows = await db
     .select({

@@ -14,10 +14,15 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const habitId = searchParams.get("habitId");
   const range = searchParams.get("range") || "all";
+  const date = searchParams.get("date") || undefined;
+  const tzOffsetRaw = searchParams.get("tzOffset");
+  const tzOffset = tzOffsetRaw !== null ? Number(tzOffsetRaw) : undefined;
 
   const result = await getSessionsForUser(userId, {
     habitId: habitId ?? undefined,
     range,
+    date,
+    tzOffset,
   });
 
   return NextResponse.json(result);

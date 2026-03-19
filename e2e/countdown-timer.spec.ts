@@ -40,7 +40,7 @@ test.describe('Unified Timer Start', () => {
     await expect(page.getByText('60m')).toBeVisible();
 
     // Custom input shows 25 (matching default selection)
-    await expect(page.getByPlaceholder(/minutes/i)).toHaveValue('25');
+    await expect(page.getByLabel('min')).toHaveValue('25');
   });
 
   test('clicking a preset updates the custom input to match', async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe('Unified Timer Start', () => {
     await page.getByRole('button', { name: 'Countdown' }).click();
 
     await page.getByText('45m').click();
-    await expect(page.getByPlaceholder(/minutes/i)).toHaveValue('45');
+    await expect(page.getByLabel('min')).toHaveValue('45');
   });
 
   test('starting in stopwatch mode begins recording', async ({ page }) => {
@@ -57,7 +57,7 @@ test.describe('Unified Timer Start', () => {
     await page.getByRole('button', { name: /^start$/i }).click();
 
     await expect(page.getByText('Recording...')).toBeVisible();
-    await expect(page.getByText(/\d{2}:\d{2}:\d{2}/)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: /\d{2}:\d{2}:\d{2}/ })).toBeVisible();
   });
 
   test('starting in countdown mode begins countdown', async ({ page }) => {
@@ -66,16 +66,16 @@ test.describe('Unified Timer Start', () => {
     // 25m is default selected
     await page.getByRole('button', { name: /^start$/i }).click();
 
-    await expect(page.getByText(/2[45]:\d{2}/)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: /2[45]:\d{2}/ })).toBeVisible();
   });
 
   test('custom minutes starts correct countdown', async ({ page }) => {
     await page.getByRole('button', { name: /start/i }).click();
     await page.getByRole('button', { name: 'Countdown' }).click();
-    await page.getByPlaceholder(/minutes/i).fill('10');
+    await page.getByLabel('min').fill('10');
     await page.getByRole('button', { name: /^start$/i }).click();
 
-    await expect(page.getByText(/(?:10|09):\d{2}/)).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: /(?:10|09):\d{2}/ })).toBeVisible();
   });
 
   test('Cancel returns to dashboard', async ({ page }) => {
@@ -99,6 +99,6 @@ test.describe('Unified Timer Start', () => {
 
     // Start again — should remember countdown mode with 45 min
     await page.getByRole('button', { name: /start/i }).click();
-    await expect(page.getByPlaceholder(/minutes/i)).toHaveValue('45');
+    await expect(page.getByLabel('min')).toHaveValue('45');
   });
 });

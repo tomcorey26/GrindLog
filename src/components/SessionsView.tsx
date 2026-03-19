@@ -28,9 +28,9 @@ export function SessionsView({
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const { trigger } = useHaptics();
   const deleteSession = useDeleteSession();
-  const { pendingIds, scheduleDelete } = useDeleteWithUndo((id) => {
-    deleteSession.mutate(id);
-  });
+  const { pendingIds, scheduleDelete } = useDeleteWithUndo((id) =>
+    deleteSession.mutateAsync(id),
+  );
 
   const initialData = initialSessions ? { sessions: initialSessions, totalSeconds: initialTotalSeconds ?? 0 } : undefined;
   const { data } = useSessions({ habitId: selectedHabitId || undefined, range: dateRange, viewMode }, initialData);

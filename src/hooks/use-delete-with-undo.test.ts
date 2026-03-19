@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import { useDeleteWithUndo } from './use-delete-with-undo';
 
 vi.mock('sonner', () => {
-  const fn = vi.fn() as ReturnType<typeof vi.fn> & { success: ReturnType<typeof vi.fn> };
+  const fn = vi.fn() as ReturnType<typeof vi.fn> & { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   fn.success = vi.fn();
+  fn.error = vi.fn();
   return { toast: fn };
 });
 
@@ -31,7 +32,7 @@ afterEach(() => {
 
 describe('useDeleteWithUndo', () => {
   it('adds id to pendingIds immediately on scheduleDelete', () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteWithUndo(onDelete));
 
     act(() => {
@@ -43,7 +44,7 @@ describe('useDeleteWithUndo', () => {
   });
 
   it('calls onDelete after delay but keeps id in pendingIds to prevent re-animation', () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteWithUndo(onDelete));
 
     act(() => {
@@ -59,7 +60,7 @@ describe('useDeleteWithUndo', () => {
   });
 
   it('does not call onDelete if undo is clicked before timeout', () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteWithUndo(onDelete));
 
     act(() => {
@@ -79,7 +80,7 @@ describe('useDeleteWithUndo', () => {
   });
 
   it('shows toast with session label and undo action', () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteWithUndo(onDelete));
 
     act(() => {
@@ -98,7 +99,7 @@ describe('useDeleteWithUndo', () => {
   });
 
   it('handles multiple pending deletes independently', () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteWithUndo(onDelete));
 
     act(() => {
@@ -124,8 +125,27 @@ describe('useDeleteWithUndo', () => {
     expect(result.current.pendingIds.has(2)).toBe(true);
   });
 
+  it('removes id from pendingIds and shows error toast when onDelete rejects', async () => {
+    const onDelete = vi.fn().mockRejectedValue(new Error('Network error'));
+    const { result } = renderHook(() => useDeleteWithUndo(onDelete));
+
+    act(() => {
+      result.current.scheduleDelete(42, 'Piano session');
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(onDelete).toHaveBeenCalledWith(42);
+    expect(result.current.pendingIds.has(42)).toBe(false);
+    expect(
+      (toast as unknown as ReturnType<typeof vi.fn> & { error: ReturnType<typeof vi.fn> }).error,
+    ).toHaveBeenCalledWith('Failed to delete Piano session');
+  });
+
   it('cleans up timers on unmount', () => {
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
     const { result, unmount } = renderHook(() => useDeleteWithUndo(onDelete));
 
     act(() => {

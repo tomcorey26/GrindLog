@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
-export function useDeleteWithUndo(onDelete: (id: number) => void) {
+export function useDeleteWithUndo(onDelete: (id: number) => Promise<unknown>) {
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
   const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(
     new Map(),
@@ -13,8 +13,15 @@ export function useDeleteWithUndo(onDelete: (id: number) => void) {
     setPendingIds((prev) => new Set(prev).add(id));
 
     const timeoutId = setTimeout(() => {
-      onDelete(id);
       timersRef.current.delete(id);
+      onDelete(id).catch(() => {
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        toast.error(`Failed to delete ${label}`);
+      });
     }, 5000);
 
     timersRef.current.set(id, timeoutId);

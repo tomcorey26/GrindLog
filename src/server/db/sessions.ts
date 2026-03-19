@@ -74,6 +74,7 @@ export async function createManualSessionForUser({
     .insert(timeSessions)
     .values({
       habitId,
+      userId,
       startTime,
       endTime,
       durationSeconds,
@@ -82,6 +83,20 @@ export async function createManualSessionForUser({
     .returning();
 
   return session;
+}
+
+export async function deleteSessionForUser(
+  sessionId: number,
+  userId: number,
+) {
+  const [deleted] = await db
+    .delete(timeSessions)
+    .where(
+      and(eq(timeSessions.id, sessionId), eq(timeSessions.userId, userId)),
+    )
+    .returning();
+
+  return deleted ?? null;
 }
 
 function getDateFilter(range?: string): Date | null {

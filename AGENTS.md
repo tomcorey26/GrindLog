@@ -1,3 +1,5 @@
+Overall
+
 - Create a design document for the patterns you want followed for nextjs projects. use speech islands as a reference
 - Put logic into pure functions when you can so that they can be tested
 - Alwasy make sure the user understands what you are doing
@@ -6,7 +8,16 @@
 - always split new work into a worktree or branch outside of git
 - Follow engineering best practices for performant and seucre software
 - Write tests that test behavior over implementation details
-- PUsh back against me if I tell you think is wrong
+- PUsh back againstome if I tell you think is wrong
+- Avoid using third party dependcies if you can
+- Use haptic feedback whenever you can
+- Mobile first, keep api layer seperate so can easily have web and mobile app
+- Write tight specs so that the AI does what you want, use tests for this
+
+React
+
+- Use the react compiler, since we are using the compiler. Dont use useCallback
+  or useMemo
 
 Database
 
@@ -22,9 +33,22 @@ Todo:
 
 Testing
 
+- Write tests. Not too many. Mostly integration. https://kentcdodds.com/blog/write-tests
 - E2E tests with Playwright
 - Unit/Integration tests with RTL
 - Api route testing with???
+- How to keep tests determinisitc
 
-Cleaning up orphan processes
-Warning: Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+- After completeing a PR, always add what was learned here
+
+Devops setup
+
+- DB
+- Have persistent volume setup for SQL lite, so that on redeploy our db file does not get lost
+- Locally (you, the developer): change schema → npm run db:generate → commit the migration files
+- Prod (Coolify): drizzle-kit migrate runs the migration files at startup
+- Use one coolify instance with another server that has your apps
+
+UI
+
+- Utilize shadcn, and some kind of reusable component library template (shipfast?) for spinning up apps quick

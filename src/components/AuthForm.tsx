@@ -1,9 +1,10 @@
 'use client';
+'use no memo'; // react-hook-form uses mutable refs incompatible with React Compiler
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,7 @@ export function AuthForm() {
     reset,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(isLogin ? loginSchema : signupSchema),
+    resolver: standardSchemaResolver(isLogin ? loginSchema : signupSchema),
     mode: 'onBlur',
   });
 

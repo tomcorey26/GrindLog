@@ -10,7 +10,7 @@ Replace password-based auth with passkey-only (WebAuthn) auth using `@simpleweba
 - **Multiple passkeys per user** (Option B) — users register backup passkeys for recovery
 - **Passkey sync** (Option D) — iCloud Keychain, Google Password Manager, 1Password handle cross-device access naturally
 - **Library: `@simplewebauthn`** — wraps raw WebAuthn, handles CBOR/attestation complexity
-- **Migration:** clean cut, use `drizzle-kit push` with fresh database
+- **Migration:** delete all existing migrations in `drizzle/`, update schema, run `db:generate` for a single fresh migration, wipe database, run `db:migrate`
 
 ## Data Model
 

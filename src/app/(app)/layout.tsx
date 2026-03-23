@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/Providers";
@@ -12,7 +13,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="h-dvh flex flex-col bg-background">
         <div className="max-w-md w-full mx-auto flex flex-col flex-1 min-h-0">
           <header className="px-4 pt-6 pb-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold">10,000 Hours</h1>
+            <div className="flex items-center gap-2">
+              <Image src="/icon.webp" alt="" width={28} height={28} />
+              <h1 className="text-xl font-bold">10,000 Hours</h1>
+            </div>
             <div className="flex items-center gap-1">
               <Link
                 href="/account"

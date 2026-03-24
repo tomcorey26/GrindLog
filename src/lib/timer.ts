@@ -21,6 +21,9 @@ type TimerData = {
 };
 
 export function buildSessionFromTimer(timer: TimerData, now: Date) {
+  // Math.ceil prevents countdown timers from recording 1s less than target
+  // due to client/server clock skew. Tradeoff: stopwatch mode may record up
+  // to 1s more than actual elapsed time, which is acceptable for habit tracking.
   const elapsed = Math.ceil(
     (now.getTime() - timer.startTime.getTime()) / 1000
   );

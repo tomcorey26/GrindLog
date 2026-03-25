@@ -141,11 +141,11 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
           </p>
         </div>
       ) : (
-        <div className="space-y-3 mb-6">
+        <div className="mb-6">
           {activeHabit && (
             <div
               onClick={() => router.push("/timer")}
-              className="cursor-pointer"
+              className="cursor-pointer mb-3"
               data-testid="active-habit-card"
             >
               <HabitCard
@@ -157,26 +157,28 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
               />
             </div>
           )}
-          <AnimatePresence initial={false}>
-            {habits
-              .filter((h) => !h.activeTimer)
-              .map((habit) => (
-                <motion.div
-                  key={habit.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <HabitCard
-                    habit={habit}
-                    onStart={handleStartClick}
-                    onDelete={handleDelete}
-                    onLog={handleLogClick}
-                  />
-                </motion.div>
-              ))}
-          </AnimatePresence>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <AnimatePresence initial={false}>
+              {habits
+                .filter((h) => !h.activeTimer)
+                .map((habit) => (
+                  <motion.div
+                    key={habit.id}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <HabitCard
+                      habit={habit}
+                      onStart={handleStartClick}
+                      onDelete={handleDelete}
+                      onLog={handleLogClick}
+                    />
+                  </motion.div>
+                ))}
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </>

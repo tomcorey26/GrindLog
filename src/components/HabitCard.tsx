@@ -67,6 +67,7 @@ export function HabitCard({
               <button
                 className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
                 aria-label="Delete habit"
+                onClick={() => trigger('light')}
               >
                 <Trash2 className="h-4 w-4" />
               </button>

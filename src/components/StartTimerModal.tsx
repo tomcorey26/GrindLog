@@ -132,7 +132,7 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
       )}
 
       <button
-        onClick={onCancel}
+        onClick={() => { trigger('light'); onCancel(); }}
         className="mt-6 text-sm text-muted-foreground hover:text-foreground"
       >
         Cancel

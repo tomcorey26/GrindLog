@@ -93,11 +93,7 @@ export function AuthForm() {
 
   const formContent = (
     <>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4"
-        noValidate
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -121,9 +117,7 @@ export function AuthForm() {
             type="password"
             {...register("password")}
             aria-invalid={!!errors.password}
-            aria-describedby={
-              errors.password ? "password-error" : undefined
-            }
+            aria-describedby={errors.password ? "password-error" : undefined}
             className="bg-background"
           />
           {errors.password ? (
@@ -141,16 +135,10 @@ export function AuthForm() {
             role="alert"
             className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2"
           >
-            <p className="text-sm text-destructive">
-              {errors.root.message}
-            </p>
+            <p className="text-sm text-destructive">{errors.root.message}</p>
           </div>
         )}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={mutation.isPending}
-        >
+        <Button type="submit" className="w-full" disabled={mutation.isPending}>
           {mutation.isPending ? "..." : isLogin ? "Sign In" : "Sign Up"}
         </Button>
       </form>

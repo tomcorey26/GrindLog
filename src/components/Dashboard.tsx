@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useHaptics } from "@/hooks/use-haptics";
 import { motion, AnimatePresence } from "framer-motion";
 import { HabitCard } from "@/components/HabitCard";
 import { AddHabitForm } from "@/components/AddHabitForm";
@@ -29,6 +30,7 @@ import type { Habit } from "@/lib/types";
 export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
   const { data: habits } = useHabits(initialHabits);
   const { data: flags } = useFeatureFlags();
+  const { trigger } = useHaptics();
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
   const [switchConfirmHabitId, setSwitchConfirmHabitId] = useState<number | null>(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
@@ -146,7 +148,7 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
         <div className="mb-6">
           {activeHabit && (
             <div
-              onClick={() => router.push("/timer")}
+              onClick={() => { trigger('light'); router.push("/timer"); }}
               className="cursor-pointer mb-3"
               data-testid="active-habit-card"
             >

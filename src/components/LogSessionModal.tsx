@@ -117,7 +117,7 @@ export function LogSessionModal({
 
         {error && <p className="text-destructive text-sm mb-2">{error}</p>}
         <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onCancel}>
+          <Button variant="outline" className="flex-1" onClick={() => { trigger('light'); onCancel(); }}>
             Cancel
           </Button>
           <Button

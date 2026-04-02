@@ -119,6 +119,7 @@ export function TimerView({
   }
 
   function handleBack() {
+    trigger('light');
     router.push("/habits");
   }
 

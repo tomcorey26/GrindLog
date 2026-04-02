@@ -28,7 +28,7 @@ export function HabitCard({
   habit: Habit;
   onStart: (habitId: number) => void;
   onDelete: (habitId: number) => void;
-  onLog: (habitId: number) => void;
+  onLog?: (habitId: number) => void;
 }) {
   const [elapsed, setElapsed] = useState("");
   const { trigger } = useHaptics();
@@ -130,16 +130,18 @@ export function HabitCard({
             >
               Start
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                trigger("light");
-                onLog(habit.id);
-              }}
-              className="flex-1"
-            >
-              Log
-            </Button>
+            {onLog && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  trigger("light");
+                  onLog(habit.id);
+                }}
+                className="flex-1"
+              >
+                Log
+              </Button>
+            )}
           </div>
         )}
       </CardContent>

@@ -5,7 +5,7 @@ export const CONGRATS_MESSAGES = [
   "Look at you, being all disciplined and stuff.",
   "The grind doesn't stop. Neither do you.",
   "Consistency is your superpower.",
-  "10,000 hours? At this rate, easy.",
+  "Mastery? At this rate, easy.",
   "You showed up. That's 90% of the battle.",
   "Your future self just sent a thank-you note.",
   "Legend behavior. Certified.",

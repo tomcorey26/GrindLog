@@ -51,7 +51,7 @@
   --radius: 0.875rem;
   --background: hsl(30 33% 97%);          /* #FAF7F2 cream */
   --foreground: hsl(30 18% 35%);          /* #8B7355 warm brown */
-  --card: hsl(25 22% 90%);               /* #E8E0D8 soft stone */
+  --card: hsl(25 22% 93%);               /* lighter stone, matches landing cards */
   --card-foreground: hsl(30 18% 35%);
   --popover: hsl(30 33% 97%);
   --popover-foreground: hsl(30 18% 35%);
@@ -159,6 +159,26 @@ button, [role="button"] {
 .animate-slam-down {
   opacity: 0;
   animation: slam-down 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes float-drift {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) rotate(0deg);
+  }
+  5% {
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-30px) rotate(8deg);
+  }
+  95% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) rotate(-5deg);
+  }
 }
 
 @keyframes bubble-up {

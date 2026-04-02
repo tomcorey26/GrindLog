@@ -18,6 +18,10 @@ vi.mock("@/hooks/use-habits", () => ({
   useStartTimer: () => ({ mutate: mockMutate }),
 }));
 
+vi.mock("@/hooks/use-feature-flags", () => ({
+  useFeatureFlags: () => ({ data: { logSession: true } }),
+}));
+
 import { Dashboard } from "./Dashboard";
 import type { Habit } from "@/lib/types";
 

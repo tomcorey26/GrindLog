@@ -13,4 +13,7 @@ export const queryKeys = {
   rankings: {
     all: ['rankings'] as const,
   },
+  features: {
+    all: ['features'] as const,
+  },
 };

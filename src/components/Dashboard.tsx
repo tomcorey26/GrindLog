@@ -23,10 +23,12 @@ import {
   useDeleteHabit,
   useStartTimer,
 } from "@/hooks/use-habits";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import type { Habit } from "@/lib/types";
 
 export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
   const { data: habits } = useHabits(initialHabits);
+  const { data: flags } = useFeatureFlags();
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
   const [switchConfirmHabitId, setSwitchConfirmHabitId] = useState<number | null>(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
@@ -121,7 +123,7 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {loggingHabit && (
+      {flags?.logSession && loggingHabit && (
         <LogSessionModal
           habitId={loggingHabit.id}
           habitName={loggingHabit.name}
@@ -153,7 +155,7 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
                 habit={activeHabit}
                 onStart={handleStartClick}
                 onDelete={handleDelete}
-                onLog={handleLogClick}
+                onLog={flags?.logSession ? handleLogClick : undefined}
               />
             </div>
           )}
@@ -173,7 +175,7 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
                       habit={habit}
                       onStart={handleStartClick}
                       onDelete={handleDelete}
-                      onLog={handleLogClick}
+                      onLog={flags?.logSession ? handleLogClick : undefined}
                     />
                   </motion.div>
                 ))}

@@ -6,6 +6,7 @@ import { useHaptics } from '@/hooks/use-haptics';
 
 const TABS = [
   { href: '/habits', label: 'Habits' },
+  { href: '/routines', label: 'Routines' },
   { href: '/sessions', label: 'Sessions' },
   { href: '/rankings', label: 'Rankings' },
 ];

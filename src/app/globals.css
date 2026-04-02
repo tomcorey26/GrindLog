@@ -51,7 +51,7 @@
   --radius: 0.875rem;
   --background: hsl(30 33% 97%);          /* #FAF7F2 cream */
   --foreground: hsl(30 18% 35%);          /* #8B7355 warm brown */
-  --card: hsl(25 22% 90%);               /* #E8E0D8 soft stone */
+  --card: hsl(25 22% 93%);               /* lighter stone, matches landing cards */
   --card-foreground: hsl(30 18% 35%);
   --popover: hsl(30 33% 97%);
   --popover-foreground: hsl(30 18% 35%);

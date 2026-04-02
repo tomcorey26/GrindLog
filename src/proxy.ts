@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionToken } from '@/lib/auth';
 
-const PROTECTED_ROUTES = ['/habits', '/sessions', '/rankings', '/timer', '/account'];
+const PROTECTED_ROUTES = ['/habits', '/routines', '/sessions', '/rankings', '/timer', '/account'];
 const AUTH_ROUTES = ['/login'];
 
 export async function proxy(request: NextRequest) {
@@ -26,5 +26,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/login', '/habits/:path*', '/sessions/:path*', '/rankings/:path*', '/timer/:path*', '/account/:path*'],
+  matcher: ['/login', '/habits/:path*', '/routines/:path*', '/sessions/:path*', '/rankings/:path*', '/timer/:path*', '/account/:path*'],
 };

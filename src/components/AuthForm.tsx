@@ -15,6 +15,46 @@ import { ApiError } from "@/lib/api";
 import { useHaptics } from "@/hooks/use-haptics";
 import Image from "next/image";
 
+const FLOAT_EMOJIS = ["🎸", "🏀", "🎨", "⏱️", "🏆", "🎵", "⌨️", "📚", "🎯", "🧘", "🎹", "⚽", "🏋️", "📷", "🎤", "♟️", "🎻", "✏️"];
+
+function FloatingEmojis() {
+  // Place emojis in a ring using % offsets so it scales with viewport
+  const items = Array.from({ length: 18 }, (_, i) => {
+    const angle = (i / 18) * Math.PI * 2;
+    const radius = 38 + (i % 3) * 8; // % of container width
+    const x = 50 + Math.cos(angle) * radius;
+    const y = 50 + Math.sin(angle) * radius;
+    return {
+      emoji: FLOAT_EMOJIS[i % FLOAT_EMOJIS.length],
+      x,
+      y,
+      duration: 12 + (i % 4) * 3,
+      delay: (i % 6) * 0.5,
+      size: 1.2 + (i % 3) * 0.4,
+    };
+  });
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {items.map((item, i) => (
+        <span
+          key={i}
+          className="absolute"
+          style={{
+            left: `${item.x}%`,
+            top: `${item.y}%`,
+            fontSize: `clamp(${item.size}rem, ${item.size + 1}vw, ${item.size + 1}rem)`,
+            animation: `float-drift ${item.duration}s ease-in-out ${item.delay}s infinite`,
+            opacity: 0,
+          }}
+        >
+          {item.emoji}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const loginSchema = z.object({
   email: z
     .string()
@@ -157,16 +197,17 @@ export function AuthForm() {
 
   if (isLogin) {
     return (
-      <div className="min-h-screen flex flex-col items-center pt-[15vh] px-4 bg-background">
+      <div className="relative min-h-screen flex flex-col items-center pt-[15vh] px-4 bg-background">
+        <FloatingEmojis />
         <Image
           src="/icon.webp"
           alt="10k Hours"
           width={48}
           height={48}
-          className="mb-4"
+          className="relative mb-4"
         />
-        <h1 className="text-2xl font-light mb-6">Sign in to 10k Hours</h1>
-        <Card className="w-full max-w-sm">
+        <h1 className="relative text-2xl font-light mb-6">Sign in to 10k Hours</h1>
+        <Card className="relative w-full max-w-sm">
           <CardContent className="pt-6">{formContent}</CardContent>
         </Card>
       </div>

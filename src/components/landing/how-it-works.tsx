@@ -62,9 +62,6 @@ export function HowItWorksSection() {
               <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-bold mb-4">
                 {step.number}
               </div>
-              {i < steps.length - 1 && (
-                <div className="hidden sm:block absolute" />
-              )}
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {step.title}
               </h3>

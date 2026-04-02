@@ -17,19 +17,14 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from /login and /
-  if (session && (AUTH_ROUTES.includes(pathname) || pathname === '/')) {
+  // Redirect authenticated users away from /login
+  if (session && AUTH_ROUTES.includes(pathname)) {
     return NextResponse.redirect(new URL('/habits', request.url));
-  }
-
-  // Redirect / to /login for unauthenticated
-  if (pathname === '/' && !session) {
-    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/', '/login', '/habits/:path*', '/sessions/:path*', '/rankings/:path*', '/timer/:path*', '/account/:path*'],
+  matcher: ['/login', '/habits/:path*', '/sessions/:path*', '/rankings/:path*', '/timer/:path*', '/account/:path*'],
 };

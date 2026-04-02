@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useHaptics } from "@/hooks/use-haptics";
 import { motion, AnimatePresence } from "framer-motion";
 import { HabitCard } from "@/components/HabitCard";
 import { AddHabitForm } from "@/components/AddHabitForm";
@@ -29,6 +30,7 @@ import type { Habit } from "@/lib/types";
 export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
   const { data: habits } = useHabits(initialHabits);
   const { data: flags } = useFeatureFlags();
+  const { trigger } = useHaptics();
   const [pendingHabitId, setPendingHabitId] = useState<number | null>(null);
   const [switchConfirmHabitId, setSwitchConfirmHabitId] = useState<number | null>(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
@@ -143,11 +145,11 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
           </p>
         </div>
       ) : (
-        <div className="space-y-3 mb-6">
+        <div className="mb-6">
           {activeHabit && (
             <div
-              onClick={() => router.push("/timer")}
-              className="cursor-pointer"
+              onClick={() => { trigger('light'); router.push("/timer"); }}
+              className="cursor-pointer mb-3"
               data-testid="active-habit-card"
             >
               <HabitCard
@@ -159,26 +161,28 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
               />
             </div>
           )}
-          <AnimatePresence initial={false}>
-            {habits
-              .filter((h) => !h.activeTimer)
-              .map((habit) => (
-                <motion.div
-                  key={habit.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <HabitCard
-                    habit={habit}
-                    onStart={handleStartClick}
-                    onDelete={handleDelete}
-                    onLog={flags?.logSession ? handleLogClick : undefined}
-                  />
-                </motion.div>
-              ))}
-          </AnimatePresence>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <AnimatePresence initial={false}>
+              {habits
+                .filter((h) => !h.activeTimer)
+                .map((habit) => (
+                  <motion.div
+                    key={habit.id}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <HabitCard
+                      habit={habit}
+                      onStart={handleStartClick}
+                      onDelete={handleDelete}
+                      onLog={flags?.logSession ? handleLogClick : undefined}
+                    />
+                  </motion.div>
+                ))}
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </>

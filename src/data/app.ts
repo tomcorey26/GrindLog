@@ -1,2 +1,2 @@
-export const APP_NAME = "10,000 Hours";
-export const APP_NAME_SHORT = "10k Hours";
+export const APP_NAME = "GrindLog";
+export const APP_NAME_SHORT = "GrindLog";

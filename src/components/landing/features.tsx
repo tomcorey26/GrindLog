@@ -27,7 +27,7 @@ const features = [
     icon: Trophy,
     title: "Track your mastery",
     description:
-      "See your skills ranked by hours. Calendar heat maps. Watch 10,000 hours get closer.",
+      "See your skills ranked by hours. Calendar heat maps. Watch mastery get closer.",
   },
 ];
 

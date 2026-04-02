@@ -223,7 +223,7 @@ export function AuthForm() {
           Create your free account
         </h1>
         <p className="mt-3 text-lg text-muted-foreground">
-          Start tracking your journey to 10,000 hours of mastery.
+          Start logging your grind toward mastery.
         </p>
         <div className="relative mt-8 h-64 lg:flex-1 lg:h-auto">
           <Image

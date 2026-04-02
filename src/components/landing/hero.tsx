@@ -65,7 +65,7 @@ export function HeroSection() {
             >
               A workout tracker, but for skills. Create routines for guitar,
               coding, art — anything you want to master. Track every session.
-              Hit 10,000 hours.
+              Log the grind.
             </motion.p>
             <motion.div className="mt-8" variants={item}>
               <PressableButton asChild size="lg">

@@ -23,6 +23,9 @@
 # worktrees
 .worktrees/
 
+# superpowers brainstorm artifacts
+.superpowers/
+
 # misc
 .DS_Store
 *.pem

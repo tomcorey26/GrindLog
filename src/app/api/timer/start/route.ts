@@ -5,7 +5,7 @@ import { startTimerForUser } from "@/server/db/timers";
 
 const startSchema = z.object({
   habitId: z.number().int().positive(),
-  targetDurationSeconds: z.number().int().positive().optional(),
+  targetDurationSeconds: z.number().int().min(5).optional(),
   startTime: z.string().datetime().optional(),
 });
 

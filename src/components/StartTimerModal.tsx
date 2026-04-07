@@ -123,12 +123,12 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
         size="lg"
         className="w-full max-w-xs py-6 text-lg"
         onClick={handleStart}
-        disabled={mode === 'countdown' && minutes === 0 && seconds === 0}
+        disabled={mode === 'countdown' && (minutes * 60 + seconds) < 5}
       >
         Start
       </PressableButton>
-      {mode === 'countdown' && minutes === 0 && seconds === 0 && (
-        <p className="text-sm text-muted-foreground mt-2">Set a duration to start</p>
+      {mode === 'countdown' && (minutes * 60 + seconds) < 5 && (
+        <p className="text-sm text-muted-foreground mt-2">Minimum countdown is 5 seconds</p>
       )}
 
       <button

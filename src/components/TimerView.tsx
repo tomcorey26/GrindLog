@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { PressableButton } from "@/components/ui/pressable-button";
 import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
-import { isCountdownComplete } from "@/lib/timer";
 import { useHaptics } from "@/hooks/use-haptics";
 import { FullHeight } from "@/components/ui/full-height";
 
@@ -34,11 +33,7 @@ export function TimerView({
       ? formatRemaining(startTime, targetDurationSeconds)
       : formatElapsed(startTime),
   );
-  const stoppedRef = useRef(false);
-
   function handleStop() {
-    if (stoppedRef.current) return;
-    stoppedRef.current = true;
     trigger("buzz");
     onStop();
   }
@@ -47,12 +42,6 @@ export function TimerView({
     const interval = setInterval(() => {
       if (isCountdown) {
         setDisplay(formatRemaining(startTime, targetDurationSeconds));
-        if (
-          !stoppedRef.current &&
-          isCountdownComplete(startTime, targetDurationSeconds)
-        ) {
-          handleStop();
-        }
       } else {
         setDisplay(formatElapsed(startTime));
       }

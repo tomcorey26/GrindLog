@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { formatTime } from "@/lib/format";
@@ -19,6 +20,7 @@ function sendBrowserNotification(title: string, body: string) {
 
 export function CountdownAutoStop() {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   const stoppingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeTimer = useTimerStore((s) => s.activeTimer);
@@ -31,6 +33,7 @@ export function CountdownAutoStop() {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      stoppingRef.current = false;
       return;
     }
 
@@ -48,28 +51,32 @@ export function CountdownAutoStop() {
         );
         stopTimer(result.durationSeconds);
 
-        const message = `Your ${formatTime(result.durationSeconds)} ${habitName} session was recorded`;
-        toast.success(message);
-        sendBrowserNotification("Session Complete", message);
-        try {
-          new Audio("/fanfare.mp3").play().catch(() => {});
-        } catch {}
+        // Only show toast/notification when NOT on habits page
+        // (the SuccessScreen handles feedback there)
+        if (!pathname.startsWith("/habits")) {
+          const message = `Your ${formatTime(result.durationSeconds)} ${habitName} session was recorded`;
+          toast.success(message);
+          sendBrowserNotification("Session Complete", message);
+          try {
+            new Audio("/fanfare.mp3").play().catch(() => {});
+          } catch {}
+        }
 
         queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.rankings.all });
       } catch {
         // Timer may have already been stopped (e.g., another tab)
-      } finally {
-        stoppingRef.current = false;
+        // Don't reset stoppingRef — stop retrying
       }
     }
 
+    stoppingRef.current = false;
     intervalRef.current = setInterval(checkAndStop, 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [activeTimer, queryClient, stopTimer]);
+  }, [activeTimer, queryClient, stopTimer, pathname]);
 
   return null;
 }

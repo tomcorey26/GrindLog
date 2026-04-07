@@ -184,11 +184,16 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
 
   function handleStop() {
     trigger("buzz");
+    // Clear activeTimer immediately so CountdownAutoStop doesn't race
+    const currentTimer = activeTimer;
+    useTimerStore.setState({ activeTimer: null });
     stopTimerApi.mutate(undefined, {
       onSuccess: (data) => {
         stopTimer(data.durationSeconds);
       },
       onError: () => {
+        // Restore timer on failure
+        useTimerStore.setState({ activeTimer: currentTimer, view: { type: "active_timer" } });
         toast.error("Failed to stop timer");
       },
     });

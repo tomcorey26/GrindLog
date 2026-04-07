@@ -22,10 +22,13 @@ export function CountdownAutoStop() {
   const stoppingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeTimer = useTimerStore((s) => s.activeTimer);
+  const timerViewMounted = useTimerStore((s) => s.timerViewMounted);
 
   useEffect(() => {
-    // Only poll for countdowns
-    if (!activeTimer?.targetDurationSeconds) {
+    // Only poll for countdowns, and only when TimerView is NOT mounted.
+    // When TimerView is on screen, it owns the stop call (foreground path).
+    // CountdownAutoStop handles the background path (other pages, app re-entry).
+    if (!activeTimer?.targetDurationSeconds || timerViewMounted) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -62,8 +65,9 @@ export function CountdownAutoStop() {
         queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.rankings.all });
       } catch {
-        // Timer may have already been stopped (e.g., another tab)
-        // Don't reset stoppingRef — stop retrying
+        // Timer was already stopped (e.g., server auto-stop or another tab).
+        // Clean up zustand so the UI doesn't show a stale timer.
+        useTimerStore.getState().resetTimer();
       }
     }
 
@@ -72,7 +76,7 @@ export function CountdownAutoStop() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [activeTimer, queryClient]);
+  }, [activeTimer, timerViewMounted, queryClient]);
 
   return null;
 }

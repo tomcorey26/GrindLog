@@ -16,6 +16,7 @@ type TimerView =
 type TimerState = {
   activeTimer: ActiveTimer | null;
   view: TimerView;
+  timerViewMounted: boolean;
   openConfig: (habitId: number, habitName: string) => void;
   closeConfig: () => void;
   startTimer: (params: {
@@ -28,11 +29,13 @@ type TimerState = {
   dismissSuccess: () => void;
   resetTimer: () => void;
   hydrate: (activeTimer: ActiveTimer | null) => void;
+  setTimerViewMounted: (mounted: boolean) => void;
 };
 
 export const useTimerStore = create<TimerState>((set, get) => ({
   activeTimer: null,
   view: { type: "habits_list" },
+  timerViewMounted: false,
 
   openConfig: (habitId, habitName) =>
     set({ view: { type: "timer_config", habitId, habitName } }),
@@ -67,4 +70,6 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     if (!activeTimer) return;
     set({ activeTimer, view: { type: "active_timer" } });
   },
+
+  setTimerViewMounted: (mounted) => set({ timerViewMounted: mounted }),
 }));

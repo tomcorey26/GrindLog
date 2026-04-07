@@ -5,6 +5,7 @@ import { PressableButton } from "@/components/ui/pressable-button";
 import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
 import { isCountdownComplete } from "@/lib/timer";
 import { useHaptics } from "@/hooks/use-haptics";
+import { useTimerStore } from "@/stores/timer-store";
 import { FullHeight } from "@/components/ui/full-height";
 
 type Props = {
@@ -28,6 +29,12 @@ export function TimerView({
 }: Props) {
   const isCountdown = targetDurationSeconds !== null;
   const { trigger } = useHaptics();
+  const setTimerViewMounted = useTimerStore((s) => s.setTimerViewMounted);
+
+  useEffect(() => {
+    setTimerViewMounted(true);
+    return () => setTimerViewMounted(false);
+  }, [setTimerViewMounted]);
 
   const [display, setDisplay] = useState(() =>
     isCountdown

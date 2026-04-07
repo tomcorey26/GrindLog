@@ -30,6 +30,7 @@ import {
 } from "@/hooks/use-habits";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useTimerStore } from "@/stores/timer-store";
+import { ApiError } from "@/lib/api";
 import { formatTime } from "@/lib/format";
 import { getRandomCongratsMessage } from "@/lib/congrats-messages";
 import type { Habit } from "@/lib/types";
@@ -65,7 +66,7 @@ function SuccessScreen({ durationSeconds }: { durationSeconds: number }) {
         });
       } catch {}
     }
-  }, []);
+  }, [trigger, durationSeconds]);
 
   return (
     <div className="relative flex-1 flex flex-col">
@@ -127,7 +128,13 @@ function SuccessScreen({ durationSeconds }: { durationSeconds: number }) {
   );
 }
 
-export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
+export function Dashboard({
+  initialHabits,
+  autoStopped,
+}: {
+  initialHabits: Habit[];
+  autoStopped?: { habitName: string; durationSeconds: number } | null;
+}) {
   const { data: habits } = useHabits(initialHabits);
   const { data: flags } = useFeatureFlags();
   const { trigger } = useHaptics();
@@ -135,6 +142,14 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
     number | null
   >(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (autoStopped) {
+      toast.success(
+        `Your ${formatTime(autoStopped.durationSeconds)} ${autoStopped.habitName} session was auto-recorded`,
+      );
+    }
+  }, [autoStopped]);
 
   const addHabit = useAddHabit();
   const deleteHabit = useDeleteHabit();
@@ -184,16 +199,17 @@ export function Dashboard({ initialHabits }: { initialHabits: Habit[] }) {
 
   function handleStop() {
     trigger("buzz");
-    // Clear activeTimer immediately so CountdownAutoStop doesn't race
-    const currentTimer = activeTimer;
-    useTimerStore.setState({ activeTimer: null });
     stopTimerApi.mutate(undefined, {
       onSuccess: (data) => {
         stopTimer(data.durationSeconds);
       },
-      onError: () => {
-        // Restore timer on failure
-        useTimerStore.setState({ activeTimer: currentTimer, view: { type: "active_timer" } });
+      onError: (error) => {
+        // 404 means the timer was already stopped (e.g., server auto-stopped
+        // an expired countdown before the client could). Treat as success.
+        if (error instanceof ApiError && error.status === 404) {
+          useTimerStore.getState().resetTimer();
+          return;
+        }
         toast.error("Failed to stop timer");
       },
     });

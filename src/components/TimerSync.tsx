@@ -29,11 +29,9 @@ export function TimerSync() {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const hydratedRef = useRef(false);
-  const stoppingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const activeTimer = useTimerStore((s) => s.activeTimer);
-  const timerViewMounted = useTimerStore((s) => s.timerViewMounted);
 
   // Fetch habits — pure GET, no server-side mutations
   const { data } = useQuery({
@@ -67,36 +65,42 @@ export function TimerSync() {
     }
   }, [pathname]);
 
-  // --- Client-side countdown polling ---
+  // --- Client-side countdown polling (sole owner of auto-stop) ---
   useEffect(() => {
-    if (!activeTimer?.targetDurationSeconds || timerViewMounted) {
+    if (!activeTimer?.targetDurationSeconds) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      stoppingRef.current = false;
       return;
     }
 
     const { startTime, targetDurationSeconds, habitName } = activeTimer;
+    let stopped = false;
 
     async function checkAndStop() {
-      if (stoppingRef.current) return;
+      if (stopped) return;
       if (!isCountdownComplete(startTime, targetDurationSeconds!)) return;
 
-      stoppingRef.current = true;
+      stopped = true;
       try {
         const result = await api<{ durationSeconds: number }>(
           "/api/timer/stop",
           { method: "POST" },
         );
 
-        const message = `Your ${formatTime(result.durationSeconds)} ${habitName} session was recorded`;
-        toast.success(message);
-        sendBrowserNotification("Session Complete", message);
-        playFanfare();
-
-        useTimerStore.getState().resetTimer();
+        const { timerViewMounted } = useTimerStore.getState();
+        if (timerViewMounted) {
+          // User is watching — show success screen
+          useTimerStore.getState().stopTimer(result.durationSeconds);
+        } else {
+          // User is away — show toast
+          const message = `Your ${formatTime(result.durationSeconds)} ${habitName} session was recorded`;
+          toast.success(message);
+          sendBrowserNotification("Session Complete", message);
+          playFanfare();
+          useTimerStore.getState().resetTimer();
+        }
 
         queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
@@ -106,12 +110,11 @@ export function TimerSync() {
       }
     }
 
-    stoppingRef.current = false;
     intervalRef.current = setInterval(checkAndStop, 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [activeTimer, timerViewMounted, queryClient]);
+  }, [activeTimer, queryClient]);
 
   return null;
 }

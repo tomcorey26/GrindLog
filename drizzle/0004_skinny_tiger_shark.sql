@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `time_sessions_user_start_uniq` ON `time_sessions` (`user_id`,`start_time`);

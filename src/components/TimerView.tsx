@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { PressableButton } from "@/components/ui/pressable-button";
 import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
-import { isCountdownComplete } from "@/lib/timer";
 import { useHaptics } from "@/hooks/use-haptics";
 import { useTimerStore } from "@/stores/timer-store";
 import { FullHeight } from "@/components/ui/full-height";
@@ -52,17 +51,11 @@ export function TimerView({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (isCountdown) {
-        setDisplay(formatRemaining(startTime, targetDurationSeconds));
-        if (
-          !stoppedRef.current &&
-          isCountdownComplete(startTime, targetDurationSeconds)
-        ) {
-          handleStop();
-        }
-      } else {
-        setDisplay(formatElapsed(startTime));
-      }
+      setDisplay(
+        isCountdown
+          ? formatRemaining(startTime, targetDurationSeconds)
+          : formatElapsed(startTime),
+      );
     }, 1000);
 
     return () => clearInterval(interval);

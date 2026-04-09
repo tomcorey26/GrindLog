@@ -51,21 +51,28 @@ export async function startTimerForUser(input: StartTimerInput) {
 }
 
 export async function stopActiveTimerForUser(userId: number) {
-  return db.transaction(async (tx) => {
-    const timer = await tx
-      .select()
-      .from(activeTimers)
-      .where(eq(activeTimers.userId, userId))
-      .get();
+  try {
+    return await db.transaction(async (tx) => {
+      const timer = await tx
+        .select()
+        .from(activeTimers)
+        .where(eq(activeTimers.userId, userId))
+        .get();
 
-    if (!timer) return null;
+      if (!timer) return null;
 
-    const session = buildSessionFromTimer(timer, new Date());
+      const session = buildSessionFromTimer(timer, new Date());
 
-    await tx.insert(timeSessions).values(session);
-    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+      await tx.insert(timeSessions).values(session);
+      await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
 
-    return { durationSeconds: session.durationSeconds, habitId: timer.habitId };
-  });
+      return { durationSeconds: session.durationSeconds, habitId: timer.habitId };
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("UNIQUE constraint failed")) {
+      return null;
+    }
+    throw e;
+  }
 }
 

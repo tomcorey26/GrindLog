@@ -161,10 +161,14 @@ describe("TimerSync", () => {
       expect(useTimerStore.getState().activeTimer).toBeNull();
     });
 
-    it("does NOT poll when timerViewMounted is true", async () => {
-      mockedApi.mockImplementation(() =>
-        Promise.resolve({ habits: [] }),
-      );
+    it("shows success screen instead of toast when timerViewMounted is true", async () => {
+      mockedApi.mockImplementation((url: string) => {
+        if (url === "/api/habits")
+          return Promise.resolve({ habits: [], autoStopped: null });
+        if (url === "/api/timer/stop")
+          return Promise.resolve({ durationSeconds: 600 });
+        return Promise.resolve({});
+      });
       mockedIsCountdownComplete.mockReturnValue(true);
 
       useTimerStore.setState({
@@ -179,15 +183,21 @@ describe("TimerSync", () => {
 
       renderHook(() => TimerSync(), { wrapper: createWrapper() });
 
-      // Wait for habits query to settle
-      await waitFor(() => {
-        expect(mockedApi).toHaveBeenCalledWith("/api/habits");
-      });
+      await waitFor(
+        () => {
+          expect(mockedApi).toHaveBeenCalledWith("/api/timer/stop", {
+            method: "POST",
+          });
+        },
+        { timeout: 3000 },
+      );
 
-      // Should never have called stop
-      expect(mockedApi).not.toHaveBeenCalledWith("/api/timer/stop", {
-        method: "POST",
+      // Should show success screen, not toast
+      expect(useTimerStore.getState().view).toEqual({
+        type: "success",
+        durationSeconds: 600,
       });
+      expect(toast.success).not.toHaveBeenCalled();
     });
 
     it("resets the timer on API failure", async () => {

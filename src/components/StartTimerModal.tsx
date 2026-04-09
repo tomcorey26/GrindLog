@@ -58,7 +58,7 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-4">
+    <div className="flex flex-col items-center justify-center px-4 py-8">
       <h2 className="text-2xl font-bold mb-2 line-clamp-2 break-words text-center w-full">{habitName}</h2>
       <p className="text-muted-foreground mb-8">Choose timer mode</p>
 
@@ -123,12 +123,12 @@ export function StartTimerModal({ habitName, onStart, onCancel }: Props) {
         size="lg"
         className="w-full max-w-xs py-6 text-lg"
         onClick={handleStart}
-        disabled={mode === 'countdown' && minutes === 0 && seconds === 0}
+        disabled={mode === 'countdown' && (minutes * 60 + seconds) < 5}
       >
         Start
       </PressableButton>
-      {mode === 'countdown' && minutes === 0 && seconds === 0 && (
-        <p className="text-sm text-muted-foreground mt-2">Set a duration to start</p>
+      {mode === 'countdown' && (minutes * 60 + seconds) < 5 && (
+        <p className="text-sm text-muted-foreground mt-2">Minimum countdown is 5 seconds</p>
       )}
 
       <button

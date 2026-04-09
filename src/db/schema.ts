@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 export const users = sqliteTable('users', {
@@ -23,7 +23,9 @@ export const timeSessions = sqliteTable('time_sessions', {
   endTime: integer('end_time', { mode: 'timestamp' }).notNull(),
   durationSeconds: integer('duration_seconds').notNull(),
   timerMode: text('timer_mode').notNull().$default(() => 'stopwatch'),
-});
+}, (table) => [
+  uniqueIndex('time_sessions_user_start_uniq').on(table.userId, table.startTime),
+]);
 
 export const activeTimers = sqliteTable('active_timers', {
   id: integer('id').primaryKey({ autoIncrement: true }),

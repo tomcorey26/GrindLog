@@ -23,12 +23,16 @@
 # worktrees
 .worktrees/
 
+# superpowers brainstorm artifacts
+.superpowers/
+
 # misc
 .DS_Store
 *.pem
 
 # playwright
 .playwright-auth.json
+test-results/
 
 # local database
 local.db

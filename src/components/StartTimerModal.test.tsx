@@ -97,7 +97,7 @@ describe('StartTimerModal', () => {
     await user.clear(minInput);
     await user.tab();
 
-    expect(screen.getByText('Set a duration to start')).toBeInTheDocument();
+    expect(screen.getByText('Minimum countdown is 5 seconds')).toBeInTheDocument();
   });
 
   it('does not call onStart when Start is clicked at 0:00 countdown', async () => {

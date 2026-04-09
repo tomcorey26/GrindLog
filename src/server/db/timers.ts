@@ -3,19 +3,16 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { activeTimers, habits, timeSessions } from "@/db/schema";
 import { buildSessionFromTimer } from "@/lib/timer";
-import type { AutoStoppedSession } from "@/lib/types";
 
 type StartTimerInput = {
   userId: number;
   habitId: number;
   targetDurationSeconds?: number;
+  startTime?: Date;
 };
 
-export async function startTimerForUser({
-  userId,
-  habitId,
-  targetDurationSeconds,
-}: StartTimerInput) {
+export async function startTimerForUser(input: StartTimerInput) {
+  const { userId, habitId, targetDurationSeconds } = input;
   return db.transaction(async (tx) => {
     const habit = await tx
       .select({ id: habits.id })
@@ -37,7 +34,7 @@ export async function startTimerForUser({
       await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
     }
 
-    const startTime = new Date();
+    const startTime = input.startTime ?? new Date();
     await tx.insert(activeTimers).values({
       habitId,
       userId,
@@ -54,53 +51,28 @@ export async function startTimerForUser({
 }
 
 export async function stopActiveTimerForUser(userId: number) {
-  return db.transaction(async (tx) => {
-    const timer = await tx
-      .select()
-      .from(activeTimers)
-      .where(eq(activeTimers.userId, userId))
-      .get();
+  try {
+    return await db.transaction(async (tx) => {
+      const timer = await tx
+        .select()
+        .from(activeTimers)
+        .where(eq(activeTimers.userId, userId))
+        .get();
 
-    if (!timer) return null;
+      if (!timer) return null;
 
-    const session = buildSessionFromTimer(timer, new Date());
+      const session = buildSessionFromTimer(timer, new Date());
 
-    await tx.insert(timeSessions).values(session);
-    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+      await tx.insert(timeSessions).values(session);
+      await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
 
-    return { durationSeconds: session.durationSeconds, habitId: timer.habitId };
-  });
+      return { durationSeconds: session.durationSeconds, habitId: timer.habitId };
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("UNIQUE constraint failed")) {
+      return null;
+    }
+    throw e;
+  }
 }
 
-export async function autoStopExpiredCountdown(
-  userId: number,
-): Promise<AutoStoppedSession | null> {
-  return db.transaction(async (tx) => {
-    const timer = await tx
-      .select()
-      .from(activeTimers)
-      .where(eq(activeTimers.userId, userId))
-      .get();
-
-    if (!timer || timer.targetDurationSeconds === null) return null;
-
-    const elapsed = Math.round((Date.now() - timer.startTime.getTime()) / 1000);
-    if (elapsed < timer.targetDurationSeconds) return null;
-
-    const session = buildSessionFromTimer(timer, new Date());
-
-    const habit = await tx
-      .select({ name: habits.name })
-      .from(habits)
-      .where(eq(habits.id, timer.habitId))
-      .get();
-
-    await tx.insert(timeSessions).values(session);
-    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
-
-    return {
-      habitName: habit?.name ?? "Unknown",
-      durationSeconds: session.durationSeconds,
-    };
-  });
-}

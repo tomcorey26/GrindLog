@@ -18,7 +18,7 @@ const startSchema = z.object({
         const diff = Date.now() - new Date(s).getTime();
         return diff >= 0 && diff <= MAX_CLOCK_SKEW_MS;
       },
-      "startTime must be within 30s of server time",
+      "startTime must be within 5s of server time",
     ),
 });
 
@@ -35,7 +35,10 @@ export async function POST(request: Request) {
   }
   const parsed = startSchema.safeParse(body);
   if (!parsed.success)
-    return NextResponse.json({ error: "Invalid habitId" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Validation failed", issues: parsed.error.issues },
+      { status: 400 },
+    );
 
   const { habitId, targetDurationSeconds, startTime } = parsed.data;
 

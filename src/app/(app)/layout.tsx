@@ -5,8 +5,7 @@ import { Providers } from "@/components/Providers";
 import { TabNav } from "@/components/TabNav";
 import { LogoutButton } from "@/components/LogoutButton";
 import { buttonVariants } from "@/components/ui/button";
-import { CountdownAutoStop } from "@/components/CountdownAutoStop";
-import { TimerHydrator } from "@/components/TimerHydrator";
+import { TimerSync } from "@/components/TimerSync";
 import { MiniTimerBar } from "@/components/MiniTimerBar";
 import { APP_NAME } from "@/data/app";
 
@@ -55,8 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         <MiniTimerBar />
         <Toaster position="top-center" />
-        <CountdownAutoStop />
-        <TimerHydrator />
+        <TimerSync />
       </div>
     </Providers>
   );

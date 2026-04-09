@@ -130,10 +130,8 @@ function SuccessScreen({ durationSeconds }: { durationSeconds: number }) {
 
 export function Dashboard({
   initialHabits,
-  autoStopped,
 }: {
   initialHabits: Habit[];
-  autoStopped?: { habitName: string; durationSeconds: number } | null;
 }) {
   const { data: habits } = useHabits(initialHabits);
   const { data: flags } = useFeatureFlags();
@@ -142,14 +140,6 @@ export function Dashboard({
     number | null
   >(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (autoStopped) {
-      toast.success(
-        `Your ${formatTime(autoStopped.durationSeconds)} ${autoStopped.habitName} session was auto-recorded`,
-      );
-    }
-  }, [autoStopped]);
 
   const addHabit = useAddHabit();
   const deleteHabit = useDeleteHabit();

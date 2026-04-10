@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
-import { formatTime } from "@/lib/format";
+import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
 import { useHaptics } from "@/hooks/use-haptics";
 import type { Habit } from "@/lib/types";
 
@@ -23,13 +24,28 @@ export function HabitCard({
   onStart,
   onDelete,
   onLog,
+  onTimerClick,
 }: {
   habit: Habit;
   onStart: (habitId: number) => void;
   onDelete: (habitId: number) => void;
   onLog?: (habitId: number) => void;
+  onTimerClick?: () => void;
 }) {
   const { trigger } = useHaptics();
+  const isTimerActive = !!habit.activeTimer;
+
+  if (isTimerActive) {
+    return (
+      <ActiveTimerCard
+        habit={habit}
+        onClick={() => {
+          trigger("light");
+          onTimerClick?.();
+        }}
+      />
+    );
+  }
 
   return (
     <Card className="transition-all">
@@ -113,6 +129,66 @@ export function HabitCard({
               Log
             </Button>
           )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActiveTimerCard({
+  habit,
+  onClick,
+}: {
+  habit: Habit;
+  onClick: () => void;
+}) {
+  const activeTimer = habit.activeTimer!;
+  const isCountdown = activeTimer.targetDurationSeconds !== null;
+
+  const [display, setDisplay] = useState(() =>
+    isCountdown
+      ? formatRemaining(activeTimer.startTime, activeTimer.targetDurationSeconds!)
+      : formatElapsed(activeTimer.startTime),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplay(
+        isCountdown
+          ? formatRemaining(activeTimer.startTime, activeTimer.targetDurationSeconds!)
+          : formatElapsed(activeTimer.startTime),
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeTimer.startTime, activeTimer.targetDurationSeconds, isCountdown]);
+
+  return (
+    <Card
+      className="transition-all border-primary cursor-pointer hover:bg-accent/50"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
+      <CardContent className="p-4 flex flex-col gap-3">
+        <h3 className="font-semibold text-lg truncate min-w-0">
+          {habit.name}
+        </h3>
+
+        <p className="text-3xl font-mono font-light tracking-tight text-primary">
+          {display}
+        </p>
+
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          <span className="text-sm text-muted-foreground">
+            {isCountdown ? "Counting down..." : "Recording..."}
+          </span>
         </div>
       </CardContent>
     </Card>

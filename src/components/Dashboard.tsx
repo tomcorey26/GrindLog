@@ -31,7 +31,7 @@ import {
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useTimerStore } from "@/stores/timer-store";
 import { ApiError } from "@/lib/api";
-import { formatTime } from "@/lib/format";
+import { formatTime, getElapsedSeconds } from "@/lib/format";
 import { getRandomCongratsMessage } from "@/lib/congrats-messages";
 import type { Habit } from "@/lib/types";
 
@@ -269,11 +269,13 @@ export function Dashboard({
           <AlertDialogHeader>
             <AlertDialogTitle>Switch timer?</AlertDialogTitle>
             <AlertDialogDescription className="break-words">
-              Your{" "}
-              <span className="font-semibold">{activeTimer?.habitName}</span>{" "}
-              session is still running. Starting{" "}
-              <span className="font-semibold">{switchConfirmHabit?.name}</span>{" "}
-              will end that session and save your progress.
+              You have a timer running for{" "}
+              <span className="font-semibold">{activeTimer?.habitName}</span>
+              {activeTimer && (
+                <> ({formatTime(getElapsedSeconds(activeTimer.startTime))})</>
+              )}
+              . Switching will save this session and start a new one for{" "}
+              <span className="font-semibold">{switchConfirmHabit?.name}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -282,13 +284,33 @@ export function Dashboard({
               variant="default"
               onClick={() => {
                 if (switchConfirmHabitId !== null) {
-                  const habit = habits.find(
-                    (h) => h.id === switchConfirmHabitId,
-                  );
-                  if (habit) {
-                    openConfig(switchConfirmHabitId, habit.name);
-                  }
+                  const savedHabitName = activeTimer?.habitName;
+                  const savedHabitId = switchConfirmHabitId;
                   setSwitchConfirmHabitId(null);
+
+                  stopTimerApi.mutate(undefined, {
+                    onSuccess: (data) => {
+                      useTimerStore.getState().resetTimer();
+                      toast.success(
+                        `${savedHabitName} session saved (${formatTime(data.durationSeconds)})`,
+                      );
+                      const habit = habits.find((h) => h.id === savedHabitId);
+                      if (habit) {
+                        openConfig(savedHabitId, habit.name);
+                      }
+                    },
+                    onError: (error) => {
+                      if (error instanceof ApiError && error.status === 404) {
+                        useTimerStore.getState().resetTimer();
+                        const habit = habits.find((h) => h.id === savedHabitId);
+                        if (habit) {
+                          openConfig(savedHabitId, habit.name);
+                        }
+                        return;
+                      }
+                      toast.error("Failed to stop timer");
+                    },
+                  });
                 }
               }}
             >
@@ -334,6 +356,9 @@ export function Dashboard({
                     onStart={handleStartClick}
                     onDelete={handleDelete}
                     onLog={flags?.logSession ? handleLogClick : undefined}
+                    onTimerClick={() =>
+                      useTimerStore.getState().showActiveTimer()
+                    }
                   />
                 </motion.div>
               ))}

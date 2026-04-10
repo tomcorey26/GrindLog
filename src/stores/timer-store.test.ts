@@ -84,6 +84,25 @@ describe("timer store", () => {
     });
   });
 
+  describe("showActiveTimer", () => {
+    it("sets view to active_timer when activeTimer exists", () => {
+      useTimerStore
+        .getState()
+        .startTimer({ habitId: 1, habitName: "Guitar" });
+      useTimerStore.getState().showHabits();
+      expect(useTimerStore.getState().view).toEqual({ type: "habits_list" });
+
+      useTimerStore.getState().showActiveTimer();
+      expect(useTimerStore.getState().view).toEqual({ type: "active_timer" });
+      expect(useTimerStore.getState().activeTimer).not.toBeNull();
+    });
+
+    it("does nothing when no activeTimer exists", () => {
+      useTimerStore.getState().showActiveTimer();
+      expect(useTimerStore.getState().view).toEqual({ type: "habits_list" });
+    });
+  });
+
   describe("dismissSuccess", () => {
     it("sets view back to habits_list", () => {
       useTimerStore

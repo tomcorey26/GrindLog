@@ -7,8 +7,12 @@ export function formatTime(totalSeconds: number): string {
   return `${s}s`;
 }
 
+export function getElapsedSeconds(startTimeIso: string): number {
+  return Math.max(0, Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000));
+}
+
 export function formatElapsed(startTimeIso: string): string {
-  const elapsed = Math.max(0, Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000));
+  const elapsed = getElapsedSeconds(startTimeIso);
   const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
   const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
   const s = (elapsed % 60).toString().padStart(2, '0');

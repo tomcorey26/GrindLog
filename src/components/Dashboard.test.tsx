@@ -89,4 +89,86 @@ describe("Dashboard", () => {
     await user.click(screen.getByText("Start"));
     expect(useTimerStore.getState().view.type).toBe("timer_config");
   });
+
+  it("shows inline timer on habit card when timer is active", () => {
+    const habits = [
+      makeHabit({
+        id: 1,
+        name: "Guitar",
+        activeTimer: {
+          startTime: new Date().toISOString(),
+          targetDurationSeconds: null,
+        },
+      }),
+    ];
+    useTimerStore.setState({
+      activeTimer: {
+        habitId: 1,
+        habitName: "Guitar",
+        startTime: new Date().toISOString(),
+        targetDurationSeconds: null,
+      },
+      view: { type: "habits_list" },
+    });
+
+    render(<Dashboard initialHabits={habits} />);
+
+    expect(screen.getByText("Recording...")).toBeInTheDocument();
+    expect(screen.queryByText("Start")).not.toBeInTheDocument();
+  });
+
+  it("navigates to timer view when active timer card is clicked", async () => {
+    const user = userEvent.setup();
+    const startTime = new Date().toISOString();
+    const habits = [
+      makeHabit({
+        id: 1,
+        name: "Guitar",
+        activeTimer: { startTime, targetDurationSeconds: null },
+      }),
+    ];
+    useTimerStore.setState({
+      activeTimer: {
+        habitId: 1,
+        habitName: "Guitar",
+        startTime,
+        targetDurationSeconds: null,
+      },
+      view: { type: "habits_list" },
+    });
+
+    render(<Dashboard initialHabits={habits} />);
+
+    await user.click(screen.getByText("Guitar"));
+    expect(useTimerStore.getState().view.type).toBe("active_timer");
+  });
+
+  it("shows switch confirmation with elapsed time when starting different habit", async () => {
+    const user = userEvent.setup();
+    const startTime = new Date(Date.now() - 60000).toISOString();
+    const habits = [
+      makeHabit({
+        id: 1,
+        name: "Guitar",
+        activeTimer: { startTime, targetDurationSeconds: null },
+      }),
+      makeHabit({ id: 2, name: "Piano" }),
+    ];
+    useTimerStore.setState({
+      activeTimer: {
+        habitId: 1,
+        habitName: "Guitar",
+        startTime,
+        targetDurationSeconds: null,
+      },
+      view: { type: "habits_list" },
+    });
+
+    render(<Dashboard initialHabits={habits} />);
+
+    await user.click(screen.getByText("Start"));
+    expect(
+      screen.getByText(/Switching will save this session/),
+    ).toBeInTheDocument();
+  });
 });

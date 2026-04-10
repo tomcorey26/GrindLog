@@ -26,6 +26,7 @@ type TimerState = {
   }) => void;
   stopTimer: (durationSeconds: number) => void;
   showHabits: () => void;
+  showActiveTimer: () => void;
   dismissSuccess: () => void;
   resetTimer: () => void;
   hydrate: (activeTimer: ActiveTimer | null) => void;
@@ -60,6 +61,10 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     }),
 
   showHabits: () => set({ view: { type: "habits_list" } }),
+
+  showActiveTimer: () => {
+    if (get().activeTimer) set({ view: { type: "active_timer" } });
+  },
 
   dismissSuccess: () => set({ view: { type: "habits_list" } }),
 

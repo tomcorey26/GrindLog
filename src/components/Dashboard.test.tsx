@@ -117,6 +117,59 @@ describe("Dashboard", () => {
     expect(screen.queryByText("Start")).not.toBeInTheDocument();
   });
 
+  it("shows store displayTime in active timer card", () => {
+    const startTime = new Date().toISOString();
+    const habits = [
+      makeHabit({
+        id: 1,
+        name: "Guitar",
+        activeTimer: { startTime, targetDurationSeconds: null },
+      }),
+    ];
+    useTimerStore.setState({
+      activeTimer: {
+        habitId: 1,
+        habitName: "Guitar",
+        startTime,
+        targetDurationSeconds: null,
+      },
+      view: { type: "habits_list" },
+      displayTime: "00:12:34",
+      isTimesUp: false,
+    });
+
+    render(<Dashboard initialHabits={habits} />);
+
+    expect(screen.getByText("00:12:34")).toBeInTheDocument();
+  });
+
+  it("shows Time's up! in active timer card when isTimesUp is true", () => {
+    const startTime = new Date().toISOString();
+    const habits = [
+      makeHabit({
+        id: 1,
+        name: "Guitar",
+        activeTimer: { startTime, targetDurationSeconds: 600 },
+      }),
+    ];
+    useTimerStore.setState({
+      activeTimer: {
+        habitId: 1,
+        habitName: "Guitar",
+        startTime,
+        targetDurationSeconds: 600,
+      },
+      view: { type: "habits_list" },
+      displayTime: "00:00:00",
+      isTimesUp: true,
+    });
+
+    render(<Dashboard initialHabits={habits} />);
+
+    expect(screen.getByText("Time's up!")).toBeInTheDocument();
+    expect(screen.queryByText("Counting down...")).not.toBeInTheDocument();
+  });
+
   it("navigates to timer view when active timer card is clicked", async () => {
     const user = userEvent.setup();
     const startTime = new Date().toISOString();

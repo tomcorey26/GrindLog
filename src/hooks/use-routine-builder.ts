@@ -64,13 +64,14 @@ export function useRoutineBuilder(
       prev.map((b) => {
         if (b.clientId !== clientId || b.sets.length >= 10) return b;
         const lastSet = b.sets[b.sets.length - 1];
+        // New set copies duration; previous last set keeps its break, new last set defaults to 0
         return {
           ...b,
           sets: [
             ...b.sets,
             {
               durationSeconds: lastSet.durationSeconds,
-              breakSeconds: lastSet.breakSeconds,
+              breakSeconds: 0,
             },
           ],
         };

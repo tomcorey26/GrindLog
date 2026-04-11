@@ -3,7 +3,25 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Pause, NotebookPen, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Trash2,
+  Pause,
+  NotebookPen,
+  Plus,
+  Minus,
+  MinusCircle,
+} from "lucide-react";
 import type { BuilderBlock } from "@/lib/types";
 
 type ReadonlyProps = {
@@ -17,8 +35,16 @@ type EditableProps = {
   onRemoveBlock: (clientId: string) => void;
   onAddSet: (clientId: string) => void;
   onRemoveSet: (clientId: string, setIndex: number) => void;
-  onUpdateDuration: (clientId: string, setIndex: number, durationSeconds: number) => void;
-  onUpdateBreak: (clientId: string, setIndex: number, breakSeconds: number) => void;
+  onUpdateDuration: (
+    clientId: string,
+    setIndex: number,
+    durationSeconds: number,
+  ) => void;
+  onUpdateBreak: (
+    clientId: string,
+    setIndex: number,
+    breakSeconds: number,
+  ) => void;
   onUpdateNotes: (clientId: string, notes: string) => void;
 };
 
@@ -29,25 +55,101 @@ function formatMinutes(seconds: number): string {
   return `${mins} min`;
 }
 
+function Stepper({
+  value,
+  min,
+  max,
+  onChange,
+  "aria-label": ariaLabel,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+  "aria-label": string;
+}) {
+  return (
+    <div className="inline-flex items-center rounded-md border border-input h-7 bg-input-bg">
+      <button
+        type="button"
+        onClick={() => value > min && onChange(value - 1)}
+        disabled={value <= min}
+        aria-label={`Decrease ${ariaLabel}`}
+        className="flex items-center justify-center h-full w-7 bg-primary/10 text-primary hover:bg-primary/20 active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none rounded-l-md border-r border-input"
+      >
+        <Minus className="h-3 w-3" />
+      </button>
+      <div className="relative flex-1 min-w-[3.5rem]">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          value={value}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (v >= min && v <= max) onChange(v);
+          }}
+          aria-label={ariaLabel}
+          className="w-full h-full bg-transparent text-center text-xs font-mono tabular-nums outline-none pr-7 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
+        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">
+          min
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={() => value < max && onChange(value + 1)}
+        disabled={value >= max}
+        aria-label={`Increase ${ariaLabel}`}
+        className="flex items-center justify-center h-full w-7 bg-primary/10 text-primary hover:bg-primary/20 active:scale-90 transition-all disabled:opacity-30 disabled:pointer-events-none rounded-r-md border-l border-input"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
 export function RoutineBlockCard(props: Props) {
   const { block, mode } = props;
   const isEditable = mode === "editable";
   const maxSets = block.sets.length >= 10;
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden pb-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h3 className="text-sm font-semibold text-foreground">{block.habitName}</h3>
+        <h3 className="text-base font-semibold text-primary">
+          {block.habitName}
+        </h3>
         {isEditable && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => (props as EditableProps).onRemoveBlock(block.clientId)}
-            aria-label="Delete block"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="Delete block">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove block?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove &ldquo;{block.habitName}&rdquo; and all its
+                  sets from the routine.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={() =>
+                    (props as EditableProps).onRemoveBlock(block.clientId)
+                  }
+                >
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 
@@ -61,12 +163,18 @@ export function RoutineBlockCard(props: Props) {
 
       {/* Notes input (editable) */}
       {isEditable && (
-        <div className="mx-4 mb-2">
+        <div className="mx-4 mb-2 relative">
+          <NotebookPen className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Add notes..."
             value={block.notes ?? ""}
-            onChange={(e) => (props as EditableProps).onUpdateNotes(block.clientId, e.target.value)}
-            className="text-xs h-8 bg-primary/5"
+            onChange={(e) =>
+              (props as EditableProps).onUpdateNotes(
+                block.clientId,
+                e.target.value,
+              )
+            }
+            className="text-xs h-8 bg-primary/5 pl-8"
           />
         </div>
       )}
@@ -74,7 +182,7 @@ export function RoutineBlockCard(props: Props) {
       {/* Set rows */}
       <div className="px-4 pb-2">
         {/* Column headers */}
-        <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 text-[10px] font-mono text-muted-foreground uppercase tracking-wide mb-1 px-1">
+        <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 text-xs font-mono text-muted-foreground uppercase tracking-wide mb-0.5 px-1">
           <span>Set</span>
           <span>Duration</span>
           <span>Break</span>
@@ -84,47 +192,51 @@ export function RoutineBlockCard(props: Props) {
         {block.sets.map((s, i) => (
           <div key={i}>
             {/* Set row */}
-            <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 items-center py-1.5 px-1">
-              <span className="text-xs font-mono text-muted-foreground">{i + 1}</span>
+            <div
+              className={`grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 items-center py-1 px-1 rounded ${i % 2 === 1 ? "bg-muted/60" : ""}`}
+            >
+              <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-mono font-medium">
+                {i + 1}
+              </span>
               {isEditable ? (
                 <>
-                  <Input
-                    type="number"
+                  <Stepper
+                    value={Math.round(s.durationSeconds / 60)}
                     min={1}
                     max={120}
-                    value={Math.round(s.durationSeconds / 60)}
-                    onChange={(e) => {
-                      const mins = Number(e.target.value);
-                      if (mins >= 1 && mins <= 120) {
-                        (props as EditableProps).onUpdateDuration(block.clientId, i, mins * 60);
-                      }
-                    }}
-                    className="h-7 text-xs"
-                    aria-label={`Set ${i + 1} duration`}
+                    onChange={(mins) =>
+                      (props as EditableProps).onUpdateDuration(
+                        block.clientId,
+                        i,
+                        mins * 60,
+                      )
+                    }
+                    aria-label={`Set ${i + 1} duration in minutes`}
                   />
-                  <Input
-                    type="number"
+                  <Stepper
+                    value={Math.round(s.breakSeconds / 60)}
                     min={0}
                     max={60}
-                    value={Math.round(s.breakSeconds / 60)}
-                    onChange={(e) => {
-                      const mins = Number(e.target.value);
-                      if (mins >= 0 && mins <= 60) {
-                        (props as EditableProps).onUpdateBreak(block.clientId, i, mins * 60);
-                      }
-                    }}
-                    className="h-7 text-xs"
-                    aria-label={`Set ${i + 1} break`}
+                    onChange={(mins) =>
+                      (props as EditableProps).onUpdateBreak(
+                        block.clientId,
+                        i,
+                        mins * 60,
+                      )
+                    }
+                    aria-label={`Set ${i + 1} break in minutes`}
                   />
                   {block.sets.length > 1 ? (
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => (props as EditableProps).onRemoveSet(block.clientId, i)}
+                      onClick={() =>
+                        (props as EditableProps).onRemoveSet(block.clientId, i)
+                      }
                       aria-label={`Remove set ${i + 1}`}
                       className="h-6 w-6"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <MinusCircle className="h-3.5 w-3.5" />
                     </Button>
                   ) : (
                     <span />
@@ -132,14 +244,18 @@ export function RoutineBlockCard(props: Props) {
                 </>
               ) : (
                 <>
-                  <span className="text-sm text-foreground">{formatMinutes(s.durationSeconds)}</span>
+                  <span className="text-sm text-foreground">
+                    {formatMinutes(s.durationSeconds)}
+                  </span>
                   {s.breakSeconds > 0 ? (
                     <span className="text-xs text-muted-foreground italic flex items-center gap-1">
                       <Pause className="h-3 w-3" />
                       {formatMinutes(s.breakSeconds)} break
                     </span>
                   ) : (
-                    <span />
+                    <span className="text-xs text-muted-foreground italic">
+                      No break
+                    </span>
                   )}
                   <span />
                 </>
@@ -154,7 +270,7 @@ export function RoutineBlockCard(props: Props) {
         <button
           onClick={() => (props as EditableProps).onAddSet(block.clientId)}
           disabled={maxSets}
-          className="w-full py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2.5 text-xs text-primary/70 hover:text-primary hover:bg-primary/5 transition-colors border-t border-dashed border-border disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-3 w-3 inline mr-1" />
           Add a Set

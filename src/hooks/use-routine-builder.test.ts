@@ -101,7 +101,7 @@ describe("useRoutineBuilder", () => {
   });
 
   describe("addSet", () => {
-    it("adds a set copying last set values", () => {
+    it("adds a set copying duration but defaulting break to 0", () => {
       const { result } = createHook();
       act(() =>
         result.current.addBlock({
@@ -114,7 +114,7 @@ describe("useRoutineBuilder", () => {
       const sets = result.current.blocks[0].sets;
       expect(sets).toHaveLength(2);
       expect(sets[1].durationSeconds).toBe(1500);
-      expect(sets[1].breakSeconds).toBe(300);
+      expect(sets[1].breakSeconds).toBe(0);
     });
 
     it("does not add beyond 10 sets", () => {

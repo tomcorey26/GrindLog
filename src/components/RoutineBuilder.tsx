@@ -161,7 +161,7 @@ export function RoutineBuilder({ mode, initialHabits }: RoutineBuilderProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
-          className="text-lg font-semibold h-12 border-none shadow-none focus-visible:ring-0 px-0 placeholder:text-muted-foreground/50"
+          className="text-2xl font-bold h-14 rounded-none border-0 border-b-2 border-border shadow-none px-0 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/40"
         />
 
         {/* Habit blocks */}
@@ -169,10 +169,10 @@ export function RoutineBuilder({ mode, initialHabits }: RoutineBuilderProps) {
           {blocks.map((block) => (
             <motion.div
               key={block.clientId}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
+              // initial={{ opacity: 0, height: 0 }}
+              // animate={{ opacity: 1, height: "auto" }}
+              // exit={{ opacity: 0, height: 0 }}
+              // transition={{ duration: 0.2 }}
             >
               <RoutineBlockCard
                 block={block}
@@ -231,7 +231,10 @@ export function RoutineBuilder({ mode, initialHabits }: RoutineBuilderProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleConfirmDiscard}>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleConfirmDiscard}
+            >
               Discard
             </AlertDialogAction>
           </AlertDialogFooter>

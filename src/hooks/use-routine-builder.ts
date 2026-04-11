@@ -18,7 +18,7 @@ function blocksFromRoutine(routine: Routine): BuilderBlock[] {
     habitId: b.habitId,
     habitName: b.habitName,
     notes: b.notes,
-    sets: [...b.sets],
+    sets: b.sets.map((s) => ({ ...s, clientId: generateId() })),
   }));
 }
 
@@ -43,7 +43,14 @@ export function useRoutineBuilder(
   }
 
   function addBlock(input: AddBlockInput) {
-    setBlocks((prev) => [...prev, { clientId: generateId(), ...input }]);
+    setBlocks((prev) => [
+      ...prev,
+      {
+        clientId: generateId(),
+        ...input,
+        sets: input.sets.map((s) => ({ ...s, clientId: generateId() })),
+      },
+    ]);
     setIsDirty(true);
   }
 
@@ -70,6 +77,7 @@ export function useRoutineBuilder(
           sets: [
             ...b.sets,
             {
+              clientId: generateId(),
               durationSeconds: lastSet.durationSeconds,
               breakSeconds: 0,
             },

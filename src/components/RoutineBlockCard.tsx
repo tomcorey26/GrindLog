@@ -22,6 +22,7 @@ import {
   Minus,
   MinusCircle,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { BuilderBlock } from "@/lib/types";
 
 type ReadonlyProps = {
@@ -189,8 +190,16 @@ export function RoutineBlockCard(props: Props) {
           <span />
         </div>
 
+        <AnimatePresence initial={false}>
         {block.sets.map((s, i) => (
-          <div key={i}>
+          <motion.div
+            key={s.clientId}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
             {/* Set row */}
             <div
               className={`grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 items-center py-1 px-1 rounded ${i % 2 === 1 ? "bg-muted/60" : ""}`}
@@ -261,8 +270,9 @@ export function RoutineBlockCard(props: Props) {
                 </>
               )}
             </div>
-          </div>
+          </motion.div>
         ))}
+        </AnimatePresence>
       </div>
 
       {/* Add set button */}

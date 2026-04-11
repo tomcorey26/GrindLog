@@ -49,7 +49,11 @@ export function RoutineDetailView({
         {routine.blocks.map((block) => (
           <RoutineBlockCard
             key={block.id}
-            block={{ clientId: String(block.id), ...block }}
+            block={{
+              clientId: String(block.id),
+              ...block,
+              sets: block.sets.map((s, i) => ({ ...s, clientId: `${block.id}-${i}` })),
+            }}
             mode="readonly"
           />
         ))}

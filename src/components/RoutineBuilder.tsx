@@ -161,7 +161,7 @@ export function RoutineBuilder({ mode, initialHabits }: RoutineBuilderProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
-          className="text-2xl font-bold h-14 rounded-none border-0 border-b-2 border-border shadow-none px-0 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/40"
+          className="text-2xl md:text-2xl font-bold h-14 rounded-none border-0 border-b-2 border-border shadow-none px-0 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/40"
         />
 
         {/* Habit blocks */}

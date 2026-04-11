@@ -45,7 +45,7 @@ export function useStopTimer() {
     mutationFn: () => api<{ durationSeconds: number; habitId: number }>('/api/timer/stop', { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.history.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.rankings.all });
     },
   });

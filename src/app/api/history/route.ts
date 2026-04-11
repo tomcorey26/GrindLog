@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUserId } from "@/lib/auth";
 import {
-  createManualSessionForUser,
-  getSessionsForUser,
-} from "@/server/db/sessions";
+  createManualHistoryEntry,
+  getHistoryForUser,
+} from "@/server/db/history";
 import { getFeatureFlags } from "@/lib/feature-flags";
 
 export async function GET(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const habitId = searchParams.get("habitId");
   const range = searchParams.get("range") || "all";
 
-  const result = await getSessionsForUser(userId, {
+  const result = await getHistoryForUser(userId, {
     habitId: habitId ?? undefined,
     range,
   });
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(result);
 }
 
-const logSessionSchema = z.object({
+const logHistorySchema = z.object({
   habitId: z.number().int().positive(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   durationMinutes: z.number().positive().max(1440),
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = logSessionSchema.safeParse(body);
+  const parsed = logHistorySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid input", details: parsed.error.flatten() },
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   const { habitId, date, durationMinutes } = parsed.data;
 
-  const sessionDate = new Date(date + "T12:00:00");
+  const entryDate = new Date(date + "T12:00:00");
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
 
-  if (sessionDate < sevenDaysAgo || sessionDate >= tomorrow) {
+  if (entryDate < sevenDaysAgo || entryDate >= tomorrow) {
     return NextResponse.json(
       { error: "Date must be within the last 7 days" },
       { status: 400 },
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   const startTime = new Date(date + "T00:00:00");
   const endTime = new Date(startTime.getTime() + durationSeconds * 1000);
 
-  const session = await createManualSessionForUser({
+  const entry = await createManualHistoryEntry({
     userId,
     habitId,
     startTime,
@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
     durationSeconds,
   });
 
-  if (!session)
+  if (!entry)
     return NextResponse.json({ error: "Habit not found" }, { status: 404 });
 
-  return NextResponse.json({ session }, { status: 201 });
+  return NextResponse.json({ entry }, { status: 201 });
 }

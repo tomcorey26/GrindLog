@@ -34,7 +34,7 @@ test.describe('Countdown Auto-Stop', () => {
     await page.waitForTimeout(6000);
 
     // Navigate to a non-habits page — TimerSync hydrates and polling stops it
-    await page.goto('/sessions');
+    await page.goto('/history');
 
     await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('[data-sonner-toast]').first()).toContainText('session was recorded');

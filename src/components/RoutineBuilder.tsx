@@ -21,10 +21,11 @@ import { RoutineStickyHeader } from "@/components/RoutineStickyHeader";
 import { RoutineBlockCard } from "@/components/RoutineBlockCard";
 import { HabitPicker } from "@/components/HabitPicker";
 import { HabitBlockConfigForm } from "@/components/HabitBlockConfigForm";
-import { useRoutineBuilderStore } from "@/stores/routine-builder-store";
 import { useHabits, useAddHabit } from "@/hooks/use-habits";
 import { useCreateRoutine, useUpdateRoutine } from "@/hooks/use-routines";
 import { useHaptics } from "@/hooks/use-haptics";
+import type { RoutineBuilderState } from "@/hooks/use-routine-builder";
+import type { Habit } from "@/lib/types";
 
 type PickerView =
   | { type: "closed" }
@@ -33,10 +34,11 @@ type PickerView =
 
 type RoutineBuilderProps = {
   mode: "create" | "edit";
-  initialHabits?: import("@/lib/types").Habit[];
+  initialHabits?: Habit[];
+  builder: RoutineBuilderState;
 };
 
-export function RoutineBuilder({ mode, initialHabits }: RoutineBuilderProps) {
+export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderProps) {
   const router = useRouter();
   const { trigger } = useHaptics();
   const { data: habits } = useHabits(initialHabits);
@@ -58,7 +60,7 @@ export function RoutineBuilder({ mode, initialHabits }: RoutineBuilderProps) {
     updateSetDuration,
     updateSetBreak,
     toPayload,
-  } = useRoutineBuilderStore();
+  } = builder;
 
   const [pickerView, setPickerView] = useState<PickerView>({ type: "closed" });
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);

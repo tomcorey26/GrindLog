@@ -23,7 +23,11 @@ export default async function EditRoutinePage({
 
   return (
     <Suspense fallback={<Spinner />}>
-      <RoutineBuilderPage mode="edit" routine={routine} initialHabits={habits} />
+      <RoutineBuilderPage
+        mode="edit"
+        routine={routine}
+        initialHabits={habits}
+      />
     </Suspense>
   );
 }

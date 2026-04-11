@@ -41,3 +41,13 @@ export type Routine = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type BuilderSet = RoutineSet;
+
+export type BuilderBlock = {
+  clientId: string;
+  habitId: number;
+  habitName: string;
+  notes: string | null;
+  sets: BuilderSet[];
+};

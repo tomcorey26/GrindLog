@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Pause, NotebookPen, Plus } from "lucide-react";
-import type { BuilderBlock } from "@/stores/routine-builder-store";
+import type { BuilderBlock } from "@/lib/types";
 
 type ReadonlyProps = {
   block: BuilderBlock;

@@ -10,7 +10,7 @@ export type Habit = {
   } | null;
 };
 
-export type Session = {
+export type HistoryEntry = {
   id: number;
   habitName: string;
   habitId: number;
@@ -18,4 +18,36 @@ export type Session = {
   endTime: string;
   durationSeconds: number;
   timerMode: string;
+};
+
+export type RoutineSet = {
+  durationSeconds: number;
+  breakSeconds: number;
+};
+
+export type RoutineBlock = {
+  id: number;
+  habitId: number;
+  habitName: string;
+  sortOrder: number;
+  notes: string | null;
+  sets: RoutineSet[];
+};
+
+export type Routine = {
+  id: number;
+  name: string;
+  blocks: RoutineBlock[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BuilderSet = RoutineSet;
+
+export type BuilderBlock = {
+  clientId: string;
+  habitId: number;
+  habitName: string;
+  notes: string | null;
+  sets: BuilderSet[];
 };

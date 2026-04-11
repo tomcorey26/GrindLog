@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { getMonthGrid, toDateKey, formatDayHeader, isoToDateKey } from '@/lib/calendar';
 import { getHabitColor } from '@/lib/habit-colors';
 import { useHaptics } from '@/hooks/use-haptics';
-import type { Session } from '@/lib/types';
+import type { HistoryEntry } from '@/lib/types';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 type Props = {
-  sessions: Session[];
+  sessions: HistoryEntry[];
   habits: { id: number; name: string }[];
 };
 
@@ -29,7 +29,7 @@ export function CalendarView({ sessions, habits }: Props) {
   habits.forEach((h, i) => habitIndexMap.set(h.id, i));
 
   // Group sessions by date key
-  const sessionsByDate = new Map<string, Session[]>();
+  const sessionsByDate = new Map<string, HistoryEntry[]>();
   for (const s of sessions) {
     const key = isoToDateKey(s.endTime);
     if (!sessionsByDate.has(key)) sessionsByDate.set(key, []);

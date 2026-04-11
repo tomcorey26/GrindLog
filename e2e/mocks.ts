@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import type { Habit, Session } from '../src/lib/types';
+import type { Habit, HistoryEntry } from '../src/lib/types';
 
 // ─── Fixture factories ───
 
@@ -16,9 +16,9 @@ export function makeHabit(overrides: Partial<Habit> & { name: string }): Habit {
   };
 }
 
-export function makeSession(
-  overrides: Partial<Session> & { habitName: string; habitId: number },
-): Session {
+export function makeHistoryEntry(
+  overrides: Partial<HistoryEntry> & { habitName: string; habitId: number },
+): HistoryEntry {
   const now = new Date();
   const start = new Date(now.getTime() - 60_000);
   return {
@@ -35,7 +35,7 @@ export function makeSession(
 
 export type MockState = {
   habits: Habit[];
-  sessions: Session[];
+  history: HistoryEntry[];
   rankings: { rank: number; habitId: number; habitName: string; totalSeconds: number }[];
   featureFlags: Record<string, boolean>;
   /** Track stop calls for assertions */
@@ -45,7 +45,7 @@ export type MockState = {
 function defaultState(): MockState {
   return {
     habits: [],
-    sessions: [],
+    history: [],
     rankings: [],
     featureFlags: { logSession: true },
     stopCalls: [],
@@ -137,9 +137,9 @@ export async function mockApi(
       ? 'countdown'
       : 'stopwatch';
     activeHabit.activeTimer = null;
-    // Add a session
-    state.sessions.unshift(
-      makeSession({
+    // Add a history entry
+    state.history.unshift(
+      makeHistoryEntry({
         habitName: activeHabit.name,
         habitId: activeHabit.id,
         durationSeconds: duration,
@@ -153,11 +153,11 @@ export async function mockApi(
     });
   });
 
-  // Sessions
-  await page.route('**/api/sessions?*', async (route) => {
+  // History
+  await page.route('**/api/history?*', async (route) => {
     const url = new URL(route.request().url());
     const habitId = url.searchParams.get('habitId');
-    let filtered = state.sessions;
+    let filtered = state.history;
     if (habitId) {
       filtered = filtered.filter((s) => s.habitId === Number(habitId));
     }
@@ -165,22 +165,22 @@ export async function mockApi(
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ sessions: filtered, totalSeconds }),
+      body: JSON.stringify({ history: filtered, totalSeconds }),
     });
   });
 
-  // Sessions (no query string)
-  await page.route('**/api/sessions', async (route) => {
+  // History (no query string)
+  await page.route('**/api/history', async (route) => {
     if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON();
       const habit = state.habits.find((h) => h.id === body.habitId);
-      const session = makeSession({
+      const entry = makeHistoryEntry({
         habitName: habit?.name ?? 'Unknown',
         habitId: body.habitId,
         durationSeconds: body.durationMinutes * 60,
         timerMode: 'manual',
       });
-      state.sessions.unshift(session);
+      state.history.unshift(entry);
       // Update habit todaySeconds
       if (habit) {
         habit.todaySeconds += body.durationMinutes * 60;
@@ -188,25 +188,25 @@ export async function mockApi(
       await route.fulfill({
         status: 201,
         contentType: 'application/json',
-        body: JSON.stringify({ session }),
+        body: JSON.stringify({ entry }),
       });
     } else {
       // GET without query params
-      const totalSeconds = state.sessions.reduce((sum, s) => sum + s.durationSeconds, 0);
+      const totalSeconds = state.history.reduce((sum, s) => sum + s.durationSeconds, 0);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ sessions: state.sessions, totalSeconds }),
+        body: JSON.stringify({ history: state.history, totalSeconds }),
       });
     }
   });
 
-  // Session delete
-  await page.route('**/api/sessions/*', async (route) => {
+  // History entry delete
+  await page.route('**/api/history/*', async (route) => {
     if (route.request().method() === 'DELETE') {
       const url = route.request().url();
       const id = Number(url.split('/').pop());
-      state.sessions = state.sessions.filter((s) => s.id !== id);
+      state.history = state.history.filter((s) => s.id !== id);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

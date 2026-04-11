@@ -4,12 +4,12 @@ vi.mock("@/lib/auth", () => ({
   getSessionUserId: vi.fn().mockResolvedValue(1),
 }));
 
-vi.mock("@/server/db/sessions", () => ({
-  createManualSessionForUser: vi.fn().mockResolvedValue({ id: 1 }),
-  getSessionsForUser: vi.fn(),
+vi.mock("@/server/db/history", () => ({
+  createManualHistoryEntry: vi.fn().mockResolvedValue({ id: 1 }),
+  getHistoryForUser: vi.fn(),
 }));
 
-describe("POST /api/sessions", () => {
+describe("POST /api/history", () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
     vi.resetModules();
@@ -18,7 +18,7 @@ describe("POST /api/sessions", () => {
   it("returns 403 when FEATURE_LOG_SESSION is not enabled", async () => {
     vi.stubEnv("FEATURE_LOG_SESSION", "false");
     const { POST } = await import("./route");
-    const request = new Request("http://localhost/api/sessions", {
+    const request = new Request("http://localhost/api/history", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId: 1, date: "2026-04-01", durationMinutes: 30 }),
@@ -32,7 +32,7 @@ describe("POST /api/sessions", () => {
   it("allows POST when FEATURE_LOG_SESSION is enabled", async () => {
     vi.stubEnv("FEATURE_LOG_SESSION", "true");
     const { POST } = await import("./route");
-    const request = new Request("http://localhost/api/sessions", {
+    const request = new Request("http://localhost/api/history", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId: 1, date: "2026-04-01", durationMinutes: 30 }),

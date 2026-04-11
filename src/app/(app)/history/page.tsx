@@ -1,17 +1,17 @@
 import { redirect } from "next/navigation";
 import { getSessionUserId } from "@/lib/auth";
-import { SessionsView } from "@/components/SessionsView";
+import { HistoryView } from "@/components/HistoryView";
 import { Suspense } from "react";
 import { Spinner } from "@/components/Spinner";
 import { getHabitsForUser } from "@/server/db/habits";
-import { getSessionsForUser } from "@/server/db/sessions";
+import { getHistoryForUser } from "@/server/db/history";
 
-export default async function SessionsPage() {
+export default async function HistoryPage() {
   const userId = await getSessionUserId();
   if (!userId) redirect("/login");
 
-  const [sessionsData, habits] = await Promise.all([
-    getSessionsForUser(userId, {}),
+  const [historyData, habits] = await Promise.all([
+    getHistoryForUser(userId, {}),
     getHabitsForUser(userId),
   ]);
 
@@ -19,10 +19,10 @@ export default async function SessionsPage() {
 
   return (
     <Suspense fallback={<Spinner />}>
-      <SessionsView
+      <HistoryView
         habits={habitsList}
-        initialSessions={sessionsData.sessions}
-        initialTotalSeconds={sessionsData.totalSeconds}
+        initialHistory={historyData.history}
+        initialTotalSeconds={historyData.totalSeconds}
       />
     </Suspense>
   );

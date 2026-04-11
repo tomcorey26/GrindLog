@@ -119,7 +119,7 @@ describe("TimerSync", () => {
       useTimerStore.setState({
         view: { type: "success", durationSeconds: 120 },
       });
-      mockedPathname.mockReturnValue("/sessions");
+      mockedPathname.mockReturnValue("/history");
 
       renderHook(() => TimerSync(), { wrapper: createWrapper() });
 

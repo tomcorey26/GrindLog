@@ -31,14 +31,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Body */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 min-w-0">
           {/* Sidebar – desktop only */}
           <aside className="hidden md:flex flex-col w-52 shrink-0 border-r px-3 py-4">
             <TabNav orientation="vertical" />
           </aside>
 
           {/* Content column */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 min-w-0">
             {/* Mobile tab nav */}
             <div className="px-4 pt-2 md:hidden">
               <TabNav />

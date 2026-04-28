@@ -181,7 +181,7 @@ export function RoutineBlockCard(props: Props) {
       )}
 
       {/* Set rows */}
-      <div className="px-4 pb-2">
+      <div className="px-4 pb-2 overflow-hidden">
         {/* Column headers */}
         <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 text-xs font-mono text-muted-foreground uppercase tracking-wide mb-0.5 px-1">
           <span>Set</span>

@@ -69,6 +69,19 @@ export function getHabitByIdForUser(habitId: number, userId: number) {
     .get();
 }
 
+export function getHabitByNameForUser(userId: number, name: string) {
+  return db
+    .select()
+    .from(habits)
+    .where(
+      and(
+        eq(habits.userId, userId),
+        sql`LOWER(${habits.name}) = LOWER(${name})`
+      )
+    )
+    .get();
+}
+
 export async function createHabitForUser(userId: number, name: string) {
   const [habit] = await db.insert(habits).values({ userId, name }).returning();
   return habit;

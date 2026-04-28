@@ -1,4 +1,4 @@
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { routines, routineBlocks, habits } from "@/db/schema";
@@ -84,6 +84,19 @@ export async function getRoutineById(
     createdAt: routine.createdAt.toISOString(),
     updatedAt: routine.updatedAt.toISOString(),
   };
+}
+
+export function getRoutineByNameForUser(userId: number, name: string) {
+  return db
+    .select()
+    .from(routines)
+    .where(
+      and(
+        eq(routines.userId, userId),
+        sql`LOWER(${routines.name}) = LOWER(${name})`
+      )
+    )
+    .get();
 }
 
 export async function createRoutineForUser(

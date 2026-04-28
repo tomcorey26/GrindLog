@@ -132,3 +132,22 @@ async function computeStreak(habitId: number): Promise<number> {
 
   return streak;
 }
+
+const DEFAULT_HABITS = [
+  "Meditation",
+  "Coding",
+  "Guitar",
+  "Painting",
+  "Reading",
+  "Exercise",
+  "Writing",
+  "Cooking",
+  "Language Study",
+  "Chess",
+];
+
+export async function seedDefaultHabits(userId: number) {
+  await db.insert(habits).values(
+    DEFAULT_HABITS.map((name) => ({ userId, name }))
+  );
+}

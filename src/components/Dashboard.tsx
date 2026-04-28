@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useHaptics } from "@/hooks/use-haptics";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { LayoutList, LayoutGrid } from "lucide-react";
 import { HabitCard } from "@/components/HabitCard";
-import { AddHabitForm } from "@/components/AddHabitForm";
+import { HabitList } from "@/components/HabitList";
 import { StartTimerModal } from "@/components/StartTimerModal";
 import { TimerView } from "@/components/TimerView";
 import { EmojiBubbles } from "@/components/EmojiBubbles";
@@ -28,6 +29,7 @@ import {
   useStartTimer,
   useStopTimer,
 } from "@/hooks/use-habits";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useTimerStore } from "@/stores/timer-store";
@@ -129,6 +131,13 @@ function SuccessScreen({ durationSeconds }: { durationSeconds: number }) {
   );
 }
 
+type ViewMode = "list" | "grid";
+
+function getInitialViewMode(): ViewMode {
+  if (typeof window === "undefined") return "list";
+  return (localStorage.getItem("habits-view-mode") as ViewMode) ?? "list";
+}
+
 export function Dashboard({
   initialHabits,
 }: {
@@ -141,6 +150,12 @@ export function Dashboard({
     number | null
   >(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
+
+  function handleViewModeChange(mode: ViewMode) {
+    setViewMode(mode);
+    localStorage.setItem("habits-view-mode", mode);
+  }
 
   const addHabit = useAddHabit();
   const deleteHabit = useDeleteHabit();
@@ -327,44 +342,78 @@ export function Dashboard({
         />
       )}
 
-      <PageHeader title="Habits" />
-
-      <div className="mb-3">
-        <AddHabitForm onAdd={handleAdd} />
+      <div className="flex items-center justify-between">
+        <PageHeader title="Habits" />
+        <div className="flex items-center gap-1">
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="icon-sm"
+            onClick={() => handleViewModeChange("list")}
+            aria-label="List view"
+          >
+            <LayoutList className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="icon-sm"
+            onClick={() => handleViewModeChange("grid")}
+            aria-label="Grid view"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {habits.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">
-            Start by adding your first habit
-          </p>
-        </div>
+      {viewMode === "list" ? (
+        <HabitList
+          habits={habits}
+          onCreateHabit={handleAdd}
+          renderAction={(habit) => (
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => handleStartClick(habit.id)}
+            >
+              Start
+            </Button>
+          )}
+        />
       ) : (
-        <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <AnimatePresence initial={false}>
-              {habits.map((habit) => (
-                <motion.div
-                  key={habit.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <HabitCard
-                    habit={habit}
-                    onStart={handleStartClick}
-                    onDelete={handleDelete}
-                    onLog={flags?.logSession ? handleLogClick : undefined}
-                    onTimerClick={() =>
-                      useTimerStore.getState().showActiveTimer()
-                    }
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </div>
+        <>
+          {habits.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                Start by adding your first habit
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <AnimatePresence initial={false}>
+                  {habits.map((habit) => (
+                    <motion.div
+                      key={habit.id}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                      <HabitCard
+                        habit={habit}
+                        onStart={handleStartClick}
+                        onDelete={handleDelete}
+                        onLog={flags?.logSession ? handleLogClick : undefined}
+                        onTimerClick={() =>
+                          useTimerStore.getState().showActiveTimer()
+                        }
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   );

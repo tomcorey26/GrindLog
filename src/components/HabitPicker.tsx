@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { HabitToolbar } from "@/components/HabitToolbar";
 import { HabitList } from "@/components/HabitList";
 import type { Habit } from "@/lib/types";
 
@@ -18,6 +20,12 @@ export function HabitPicker({
   onClose,
   onCreateHabit,
 }: HabitPickerProps) {
+  const [search, setSearch] = useState("");
+
+  const filtered = habits.filter((h) =>
+    h.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -27,10 +35,15 @@ export function HabitPicker({
         </Button>
       </div>
       <div className="flex-1 overflow-auto px-4 py-3">
-        <HabitList
+        <HabitToolbar
           habits={habits}
-          onSelectHabit={onSelectHabit}
+          search={search}
+          onSearchChange={setSearch}
           onCreateHabit={onCreateHabit}
+        />
+        <HabitList
+          habits={filtered}
+          onSelectHabit={onSelectHabit}
         />
       </div>
     </div>

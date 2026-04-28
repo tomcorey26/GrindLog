@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useHaptics } from "@/hooks/use-haptics";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutList, LayoutGrid } from "lucide-react";
+import { LayoutList, LayoutGrid, Trash2 } from "lucide-react";
 import { HabitCard } from "@/components/HabitCard";
+import { HabitToolbar } from "@/components/HabitToolbar";
 import { HabitList } from "@/components/HabitList";
 import { StartTimerModal } from "@/components/StartTimerModal";
 import { TimerView } from "@/components/TimerView";
@@ -151,6 +152,11 @@ export function Dashboard({
   >(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
+  const [search, setSearch] = useState("");
+
+  const filteredHabits = habits.filter((h) =>
+    h.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   function handleViewModeChange(mode: ViewMode) {
     setViewMode(mode);
@@ -364,33 +370,51 @@ export function Dashboard({
         </div>
       </div>
 
+      <HabitToolbar
+        habits={habits}
+        search={search}
+        onSearchChange={setSearch}
+        onCreateHabit={handleAdd}
+      />
+
       {viewMode === "list" ? (
         <HabitList
-          habits={habits}
-          onCreateHabit={handleAdd}
+          habits={filteredHabits}
           renderAction={(habit) => (
-            <Button
-              size="sm"
-              variant="default"
-              onClick={() => handleStartClick(habit.id)}
-            >
-              Start
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => handleStartClick(habit.id)}
+              >
+                Start
+              </Button>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => handleDelete(habit.id)}
+                aria-label={`Delete ${habit.name}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           )}
         />
       ) : (
         <>
-          {habits.length === 0 ? (
+          {filteredHabits.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                Start by adding your first habit
+                {habits.length === 0
+                  ? "Start by adding your first habit"
+                  : "No habits match your search."}
               </p>
             </div>
           ) : (
             <div className="mb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <AnimatePresence initial={false}>
-                  {habits.map((habit) => (
+                  {filteredHabits.map((habit) => (
                     <motion.div
                       key={habit.id}
                       initial={{ opacity: 0, height: 0 }}

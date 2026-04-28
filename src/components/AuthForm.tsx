@@ -103,7 +103,7 @@ export function AuthForm() {
     mutation.mutate(data, {
       onSuccess: () => {
         trigger("success");
-        router.push("/habits");
+        router.push("/routines");
       },
       onError: (err) => {
         trigger("error");

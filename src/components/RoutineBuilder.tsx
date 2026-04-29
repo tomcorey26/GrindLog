@@ -125,7 +125,9 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
         toast.success("Routine updated");
       }
       trigger("success");
-      router.push("/routines");
+      // Mark builder as clean so beforeunload and discard dialog don't trigger
+      builder.markClean();
+      router.replace("/routines");
     } catch {
       toast.error("Failed to save routine");
     }

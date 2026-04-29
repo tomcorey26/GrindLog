@@ -45,8 +45,9 @@ export function useCreateRoutine() {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.routines.all }),
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: queryKeys.routines.all });
+    },
   });
 }
 
@@ -58,11 +59,13 @@ export function useUpdateRoutine() {
         method: "PUT",
         body: JSON.stringify(data),
       }),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.routines.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.routines.detail(variables.id),
-      });
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.routines.all }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.routines.detail(variables.id),
+        }),
+      ]);
     },
   });
 }

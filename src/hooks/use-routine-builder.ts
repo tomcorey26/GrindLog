@@ -163,11 +163,16 @@ export function useRoutineBuilder(
     };
   }
 
+  function markClean() {
+    setIsDirty(false);
+  }
+
   return {
     routineId,
     name,
     blocks,
     isDirty,
+    markClean,
     setName,
     addBlock,
     removeBlock,

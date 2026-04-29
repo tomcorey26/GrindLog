@@ -69,7 +69,7 @@ export function RoutineStickyHeader({
             Discard
           </Button>
         )}
-        <Button size="sm" onClick={onSave} disabled={!canSave || isSaving}>
+        <Button size="sm" onClick={onSave} disabled={!canSave || !isDirty || isSaving}>
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </div>

@@ -160,7 +160,7 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
   }
 
   return (
-    <div className="flex flex-col flex-1 -mt-0.5 md:-mt-6">
+    <div className="relative flex flex-col flex-1 -mt-0.5 md:-mt-6">
       <RoutineStickyHeader
         totalMinutes={totalMinutes}
         habitCount={blocks.length}
@@ -222,7 +222,7 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
 
       {/* Habit picker modal */}
       {pickerView.type !== "closed" && (
-        <div className="fixed inset-0 z-50 bg-background">
+        <div className="absolute inset-0 z-50 bg-background">
           {pickerView.type === "list" ? (
             <HabitPicker
               habits={habits}

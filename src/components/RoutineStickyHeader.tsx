@@ -34,42 +34,44 @@ export function RoutineStickyHeader({
 
   return (
     <div className="sticky -top-0.5 md:-top-6 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 md:px-6 py-3 -mx-4 md:-mx-6">
+      {/* Top row: back + stats */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to Routines
-          </button>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              {timeDisplay}
-            </span>
-            <span className="flex items-center gap-1">
-              <Layers className="h-3.5 w-3.5" />
-              {habitCount} {habitCount === 1 ? "habit" : "habits"}
-            </span>
-          </div>
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Back to Routines</span>
+          <span className="sm:hidden">Back</span>
+        </button>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            {timeDisplay}
+          </span>
+          <span className="flex items-center gap-1">
+            <Layers className="h-3.5 w-3.5" />
+            {habitCount}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          {mode === "edit" && onDelete && (
-            <Button variant="ghost" size="sm" onClick={onDelete}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-          {isDirty && (
-            <Button variant="outline" size="sm" onClick={onDiscard}>
-              Discard changes
-            </Button>
-          )}
-          <Button size="sm" onClick={onSave} disabled={!canSave || isSaving}>
-            {isSaving ? "Saving..." : "Save Routine"}
+      </div>
+
+      {/* Bottom row: actions */}
+      <div className="flex items-center justify-end gap-2 mt-2">
+        {mode === "edit" && onDelete && (
+          <Button variant="ghost" size="sm" onClick={onDelete} className="mr-auto">
+            <Trash2 className="h-4 w-4" />
           </Button>
-        </div>
+        )}
+        {isDirty && (
+          <Button variant="outline" size="sm" onClick={onDiscard}>
+            Discard
+          </Button>
+        )}
+        <Button size="sm" onClick={onSave} disabled={!canSave || isSaving}>
+          {isSaving ? "Saving..." : "Save"}
+        </Button>
       </div>
     </div>
   );

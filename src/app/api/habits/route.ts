@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const parsed = createHabitSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Name is required (max 100 chars)" },
+      { error: "Name is required (max 30 chars)" },
       { status: 400 },
     );
   }

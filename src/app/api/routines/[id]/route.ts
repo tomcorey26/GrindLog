@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionUserId } from "@/lib/auth";
 import {
   getRoutineById,
+  getRoutineByNameForUser,
   updateRoutineForUser,
   deleteRoutineForUser,
 } from "@/server/db/routines";
@@ -60,9 +61,18 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
+
+  const existing = await getRoutineByNameForUser(userId, parsed.data.name);
+  if (existing && existing.id !== Number(id)) {
+    return NextResponse.json(
+      { error: "A routine with this name already exists" },
+      { status: 409 },
+    );
+  }
+
   const routine = await updateRoutineForUser(Number(id), userId, parsed.data);
   if (!routine)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Not found or invalid habit references" }, { status: 404 });
 
   return NextResponse.json({ routine });
 }

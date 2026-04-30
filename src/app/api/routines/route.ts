@@ -58,5 +58,7 @@ export async function POST(request: Request) {
   }
 
   const routine = await createRoutineForUser(userId, parsed.data);
+  if (!routine)
+    return NextResponse.json({ error: "Invalid habit references" }, { status: 400 });
   return NextResponse.json({ routine }, { status: 201 });
 }

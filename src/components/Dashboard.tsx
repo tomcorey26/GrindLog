@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { useHaptics } from "@/hooks/use-haptics";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { LayoutList, LayoutGrid, Trash2 } from "lucide-react";
 import { HabitCard } from "@/components/HabitCard";
-import { AddHabitForm } from "@/components/AddHabitForm";
+import { HabitToolbar } from "@/components/HabitToolbar";
+import { HabitList } from "@/components/HabitList";
 import { StartTimerModal } from "@/components/StartTimerModal";
 import { TimerView } from "@/components/TimerView";
 import { EmojiBubbles } from "@/components/EmojiBubbles";
@@ -28,6 +30,8 @@ import {
   useStartTimer,
   useStopTimer,
 } from "@/hooks/use-habits";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useTimerStore } from "@/stores/timer-store";
 import { ApiError } from "@/lib/api";
@@ -128,6 +132,13 @@ function SuccessScreen({ durationSeconds }: { durationSeconds: number }) {
   );
 }
 
+type ViewMode = "list" | "grid";
+
+function getInitialViewMode(): ViewMode {
+  if (typeof window === "undefined") return "list";
+  return (localStorage.getItem("habits-view-mode") as ViewMode) ?? "list";
+}
+
 export function Dashboard({
   initialHabits,
 }: {
@@ -140,6 +151,18 @@ export function Dashboard({
     number | null
   >(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
+  const [deleteConfirmHabitId, setDeleteConfirmHabitId] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
+  const [search, setSearch] = useState("");
+
+  const filteredHabits = habits.filter((h) =>
+    h.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function handleViewModeChange(mode: ViewMode) {
+    setViewMode(mode);
+    localStorage.setItem("habits-view-mode", mode);
+  }
 
   const addHabit = useAddHabit();
   const deleteHabit = useDeleteHabit();
@@ -220,6 +243,7 @@ export function Dashboard({
   }
 
   const switchConfirmHabit = habits.find((h) => h.id === switchConfirmHabitId);
+  const deleteConfirmHabit = habits.find((h) => h.id === deleteConfirmHabitId);
   const loggingHabit = habits.find((h) => h.id === loggingHabitId);
 
   // ── Timer Config View ──
@@ -317,6 +341,37 @@ export function Dashboard({
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={!!deleteConfirmHabit}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirmHabitId(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete habit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{deleteConfirmHabit?.name}&rdquo;
+              and all its recorded sessions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (deleteConfirmHabitId !== null) {
+                  handleDelete(deleteConfirmHabitId);
+                  setDeleteConfirmHabitId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {flags?.logSession && loggingHabit && (
         <LogSessionModal
           habitId={loggingHabit.id}
@@ -326,42 +381,111 @@ export function Dashboard({
         />
       )}
 
-      <div className="mb-3">
-        <AddHabitForm onAdd={handleAdd} />
+      <div className="flex items-center justify-between">
+        <PageHeader title="Habits" />
+        <div className="flex items-center gap-1">
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="icon-sm"
+            onClick={() => handleViewModeChange("list")}
+            aria-label="List view"
+          >
+            <LayoutList className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="icon-sm"
+            onClick={() => handleViewModeChange("grid")}
+            aria-label="Grid view"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {habits.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">
-            Start by adding your first habit
-          </p>
-        </div>
+      <HabitToolbar
+        habits={habits}
+        search={search}
+        onSearchChange={setSearch}
+        onCreateHabit={handleAdd}
+      />
+
+      {viewMode === "list" ? (
+        <HabitList
+          habits={filteredHabits}
+          renderDetail={(habit) => (
+            <div className="flex items-center gap-3 mt-0.5">
+              <span className="text-xs text-primary font-mono">
+                {formatTime(habit.todaySeconds)} today
+              </span>
+              <span className="text-xs text-muted-foreground font-mono">
+                {formatTime(habit.totalSeconds)} total
+              </span>
+              {habit.streak > 1 && (
+                <span className="text-xs text-muted-foreground">
+                  · 🔥 {habit.streak}d streak
+                </span>
+              )}
+            </div>
+          )}
+          renderAction={(habit) => (
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => handleStartClick(habit.id)}
+              >
+                Start
+              </Button>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setDeleteConfirmHabitId(habit.id)}
+                aria-label={`Delete ${habit.name}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        />
       ) : (
-        <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <AnimatePresence initial={false}>
-              {habits.map((habit) => (
-                <motion.div
-                  key={habit.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <HabitCard
-                    habit={habit}
-                    onStart={handleStartClick}
-                    onDelete={handleDelete}
-                    onLog={flags?.logSession ? handleLogClick : undefined}
-                    onTimerClick={() =>
-                      useTimerStore.getState().showActiveTimer()
-                    }
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </div>
+        <>
+          {filteredHabits.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                {habits.length === 0
+                  ? "Start by adding your first habit"
+                  : "No habits match your search."}
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <AnimatePresence initial={false}>
+                  {filteredHabits.map((habit) => (
+                    <motion.div
+                      key={habit.id}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                      <HabitCard
+                        habit={habit}
+                        onStart={handleStartClick}
+                        onDelete={handleDelete}
+                        onLog={flags?.logSession ? handleLogClick : undefined}
+                        onTimerClick={() =>
+                          useTimerStore.getState().showActiveTimer()
+                        }
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   );

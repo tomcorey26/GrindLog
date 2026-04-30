@@ -69,6 +69,19 @@ export function getHabitByIdForUser(habitId: number, userId: number) {
     .get();
 }
 
+export function getHabitByNameForUser(userId: number, name: string) {
+  return db
+    .select()
+    .from(habits)
+    .where(
+      and(
+        eq(habits.userId, userId),
+        sql`LOWER(${habits.name}) = LOWER(${name})`
+      )
+    )
+    .get();
+}
+
 export async function createHabitForUser(userId: number, name: string) {
   const [habit] = await db.insert(habits).values({ userId, name }).returning();
   return habit;
@@ -118,4 +131,23 @@ async function computeStreak(habitId: number): Promise<number> {
   }
 
   return streak;
+}
+
+const DEFAULT_HABITS = [
+  "Meditation",
+  "Coding",
+  "Guitar",
+  "Painting",
+  "Reading",
+  "Exercise",
+  "Writing",
+  "Cooking",
+  "Language Study",
+  "Chess",
+];
+
+export async function seedDefaultHabits(userId: number) {
+  await db.insert(habits).values(
+    DEFAULT_HABITS.map((name) => ({ userId, name }))
+  );
 }

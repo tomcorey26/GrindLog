@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
 import { createUser, getUserByEmail } from "@/server/db/users";
+import { seedDefaultHabits } from "@/server/db/habits";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -35,6 +36,11 @@ export async function POST(request: Request) {
 
   const passwordHash = await hashPassword(password);
   const user = await createUser(email, passwordHash);
+  try {
+    await seedDefaultHabits(user.id);
+  } catch (err) {
+    console.error("Failed to seed default habits:", err);
+  }
 
   await setSessionCookie(user.id);
   return NextResponse.json({ id: user.id, email: user.email });

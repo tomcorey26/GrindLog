@@ -69,7 +69,7 @@ export function RoutineDetailView({
       </div>
 
       {/* Sticky footer */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border -mx-4 md:-mx-6 px-4 md:px-6 py-3">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border -mx-4 md:-mx-6 px-4 md:px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <Button className="w-full" disabled>
           Start Routine (Coming Soon)
         </Button>

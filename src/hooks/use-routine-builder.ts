@@ -26,7 +26,7 @@ export function useRoutineBuilder(
   mode: "create" | "edit",
   routine?: Routine
 ) {
-  const [routineId] = useState<number | null>(
+  const [routineId, setRoutineId] = useState<number | null>(
     mode === "edit" && routine ? routine.id : null
   );
   const [name, setNameRaw] = useState(
@@ -36,6 +36,25 @@ export function useRoutineBuilder(
     mode === "edit" && routine ? () => blocksFromRoutine(routine) : []
   );
   const [isDirty, setIsDirty] = useState(false);
+
+  const routineKey = mode === "edit" ? routine?.id ?? null : null;
+  const [prevKey, setPrevKey] = useState<{ mode: string; key: number | null }>({
+    mode,
+    key: routineKey,
+  });
+  if (prevKey.mode !== mode || prevKey.key !== routineKey) {
+    setPrevKey({ mode, key: routineKey });
+    if (mode === "edit" && routine) {
+      setRoutineId(routine.id);
+      setNameRaw(routine.name);
+      setBlocks(blocksFromRoutine(routine));
+    } else {
+      setRoutineId(null);
+      setNameRaw("");
+      setBlocks([]);
+    }
+    setIsDirty(false);
+  }
 
   function setName(name: string) {
     setNameRaw(name);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUserId } from "@/lib/auth";
+import { parseId } from "@/lib/utils";
 import {
   getRoutineById,
   getRoutineByNameForUser,
@@ -26,11 +27,6 @@ const updateRoutineSchema = z.object({
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-function parseId(id: string): number | null {
-  const n = parseInt(id, 10);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
 
 export async function GET(request: Request, context: RouteContext) {
   const userId = await getSessionUserId();

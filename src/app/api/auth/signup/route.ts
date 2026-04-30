@@ -36,7 +36,11 @@ export async function POST(request: Request) {
 
   const passwordHash = await hashPassword(password);
   const user = await createUser(email, passwordHash);
-  await seedDefaultHabits(user.id);
+  try {
+    await seedDefaultHabits(user.id);
+  } catch (err) {
+    console.error("Failed to seed default habits:", err);
+  }
 
   await setSessionCookie(user.id);
   return NextResponse.json({ id: user.id, email: user.email });

@@ -151,22 +151,26 @@ export async function createRoutineForUser(
   const habitsOwned = await verifyHabitOwnership(userId, data.blocks.map(b => b.habitId));
   if (!habitsOwned) return null;
 
-  const [routine] = await db
-    .insert(routines)
-    .values({ userId, name: data.name })
-    .returning();
+  const routine = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(routines)
+      .values({ userId, name: data.name })
+      .returning();
 
-  if (data.blocks.length > 0) {
-    await db.insert(routineBlocks).values(
-      data.blocks.map((block) => ({
-        routineId: routine.id,
-        habitId: block.habitId,
-        sortOrder: block.sortOrder,
-        notes: block.notes ?? null,
-        sets: JSON.stringify(block.sets),
-      })),
-    );
-  }
+    if (data.blocks.length > 0) {
+      await tx.insert(routineBlocks).values(
+        data.blocks.map((block) => ({
+          routineId: created.id,
+          habitId: block.habitId,
+          sortOrder: block.sortOrder,
+          notes: block.notes ?? null,
+          sets: JSON.stringify(block.sets),
+        })),
+      );
+    }
+
+    return created;
+  });
 
   const blocks = await fetchBlocksForRoutine(routine.id);
   return {
@@ -227,14 +231,16 @@ export async function updateRoutineForUser(
     }
   });
 
-  const blocks = await fetchBlocksForRoutine(routineId);
   const updated = await db.select().from(routines).where(eq(routines.id, routineId)).get();
+  if (!updated) return null;
+
+  const blocks = await fetchBlocksForRoutine(routineId);
   return {
-    id: updated!.id,
-    name: updated!.name,
+    id: updated.id,
+    name: updated.name,
     blocks,
-    createdAt: updated!.createdAt.toISOString(),
-    updatedAt: updated!.updatedAt.toISOString(),
+    createdAt: updated.createdAt.toISOString(),
+    updatedAt: updated.updatedAt.toISOString(),
   };
 }
 

@@ -58,18 +58,37 @@ export async function getRoutinesForUser(userId: number): Promise<Routine[]> {
     .where(eq(routines.userId, userId))
     .orderBy(desc(routines.updatedAt));
 
-  return Promise.all(
-    userRoutines.map(async (routine) => {
-      const blocks = await fetchBlocksForRoutine(routine.id);
-      return {
-        id: routine.id,
-        name: routine.name,
-        blocks,
-        createdAt: routine.createdAt.toISOString(),
-        updatedAt: routine.updatedAt.toISOString(),
-      };
-    }),
-  );
+  if (userRoutines.length === 0) return [];
+
+  const routineIds = userRoutines.map((r) => r.id);
+  const allRawBlocks = await db
+    .select({
+      id: routineBlocks.id,
+      routineId: routineBlocks.routineId,
+      habitId: routineBlocks.habitId,
+      habitName: habits.name,
+      sortOrder: routineBlocks.sortOrder,
+      notes: routineBlocks.notes,
+      sets: routineBlocks.sets,
+    })
+    .from(routineBlocks)
+    .innerJoin(habits, eq(routineBlocks.habitId, habits.id))
+    .where(inArray(routineBlocks.routineId, routineIds));
+
+  const blocksByRoutine = new Map<number, RawBlock[]>();
+  for (const block of allRawBlocks) {
+    const list = blocksByRoutine.get(block.routineId) ?? [];
+    list.push(block);
+    blocksByRoutine.set(block.routineId, list);
+  }
+
+  return userRoutines.map((routine) => ({
+    id: routine.id,
+    name: routine.name,
+    blocks: parseBlocks(blocksByRoutine.get(routine.id) ?? []),
+    createdAt: routine.createdAt.toISOString(),
+    updatedAt: routine.updatedAt.toISOString(),
+  }));
 }
 
 export async function getRoutineById(

@@ -27,13 +27,22 @@ const updateRoutineSchema = z.object({
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+function parseId(id: string): number | null {
+  const n = parseInt(id, 10);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 export async function GET(request: Request, context: RouteContext) {
   const userId = await getSessionUserId();
   if (!userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;
-  const routine = await getRoutineById(Number(id), userId);
+  const routineId = parseId(id);
+  if (!routineId)
+    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+  const routine = await getRoutineById(routineId, userId);
   if (!routine)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -61,16 +70,19 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
+  const routineId = parseId(id);
+  if (!routineId)
+    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
 
   const existing = await getRoutineByNameForUser(userId, parsed.data.name);
-  if (existing && existing.id !== Number(id)) {
+  if (existing && existing.id !== routineId) {
     return NextResponse.json(
       { error: "A routine with this name already exists" },
       { status: 409 },
     );
   }
 
-  const routine = await updateRoutineForUser(Number(id), userId, parsed.data);
+  const routine = await updateRoutineForUser(routineId, userId, parsed.data);
   if (!routine)
     return NextResponse.json({ error: "Not found or invalid habit references" }, { status: 404 });
 
@@ -83,7 +95,11 @@ export async function DELETE(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;
-  const deleted = await deleteRoutineForUser(Number(id), userId);
+  const routineId = parseId(id);
+  if (!routineId)
+    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+  const deleted = await deleteRoutineForUser(routineId, userId);
   if (!deleted)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 

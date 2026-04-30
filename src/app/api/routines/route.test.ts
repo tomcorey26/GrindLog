@@ -6,10 +6,12 @@ vi.mock("@/lib/auth", () => ({
 
 const mockGetRoutinesForUser = vi.fn();
 const mockCreateRoutineForUser = vi.fn();
+const mockGetRoutineByNameForUser = vi.fn();
 
 vi.mock("@/server/db/routines", () => ({
   getRoutinesForUser: (...args: any[]) => mockGetRoutinesForUser(...args),
   createRoutineForUser: (...args: any[]) => mockCreateRoutineForUser(...args),
+  getRoutineByNameForUser: (...args: any[]) => mockGetRoutineByNameForUser(...args),
 }));
 
 import { getSessionUserId } from "@/lib/auth";
@@ -77,6 +79,7 @@ describe("POST /api/routines", () => {
 
   it("creates routine with valid data", async () => {
     vi.mocked(getSessionUserId).mockResolvedValue(1);
+    mockGetRoutineByNameForUser.mockResolvedValue(undefined);
     const mockRoutine = { id: 1, name: "Morning", blocks: [], createdAt: "2026-04-10T00:00:00.000Z", updatedAt: "2026-04-10T00:00:00.000Z" };
     mockCreateRoutineForUser.mockResolvedValue(mockRoutine);
     const { POST } = await import("./route");
@@ -92,5 +95,22 @@ describe("POST /api/routines", () => {
     expect(res.status).toBe(201);
     const data = await res.json();
     expect(data.routine.name).toBe("Morning");
+  });
+
+  it("rejects duplicate routine name with 409 (case-insensitive)", async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(1);
+    mockGetRoutineByNameForUser.mockResolvedValue({ id: 7, userId: 1, name: "Morning" });
+    const { POST } = await import("./route");
+    const req = new Request("http://localhost/api/routines", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "MORNING",
+        blocks: [{ habitId: 1, sortOrder: 0, notes: null, sets: [{ durationSeconds: 1500, breakSeconds: 300 }] }],
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(409);
+    expect(mockCreateRoutineForUser).not.toHaveBeenCalled();
   });
 });

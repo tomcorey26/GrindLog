@@ -151,6 +151,7 @@ export function Dashboard({
     number | null
   >(null);
   const [loggingHabitId, setLoggingHabitId] = useState<number | null>(null);
+  const [deleteConfirmHabitId, setDeleteConfirmHabitId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
   const [search, setSearch] = useState("");
 
@@ -242,6 +243,7 @@ export function Dashboard({
   }
 
   const switchConfirmHabit = habits.find((h) => h.id === switchConfirmHabitId);
+  const deleteConfirmHabit = habits.find((h) => h.id === deleteConfirmHabitId);
   const loggingHabit = habits.find((h) => h.id === loggingHabitId);
 
   // ── Timer Config View ──
@@ -339,6 +341,37 @@ export function Dashboard({
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={!!deleteConfirmHabit}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirmHabitId(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete habit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{deleteConfirmHabit?.name}&rdquo;
+              and all its recorded sessions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (deleteConfirmHabitId !== null) {
+                  handleDelete(deleteConfirmHabitId);
+                  setDeleteConfirmHabitId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {flags?.logSession && loggingHabit && (
         <LogSessionModal
           habitId={loggingHabit.id}
@@ -408,7 +441,7 @@ export function Dashboard({
               <Button
                 size="icon-sm"
                 variant="ghost"
-                onClick={() => handleDelete(habit.id)}
+                onClick={() => setDeleteConfirmHabitId(habit.id)}
                 aria-label={`Delete ${habit.name}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useHaptics } from "@/hooks/use-haptics";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutList, LayoutGrid, Trash2, Flame } from "lucide-react";
+import { LayoutList, LayoutGrid, Trash2 } from "lucide-react";
 import { HabitCard } from "@/components/HabitCard";
 import { HabitToolbar } from "@/components/HabitToolbar";
 import { HabitList } from "@/components/HabitList";
@@ -421,10 +421,9 @@ export function Dashboard({
               <span className="text-xs text-muted-foreground font-mono">
                 {formatTime(habit.totalSeconds)} total
               </span>
-              {habit.streak > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-xs text-orange-500 font-medium">
-                  <Flame className="h-3 w-3" />
-                  {habit.streak}
+              {habit.streak > 1 && (
+                <span className="text-xs text-muted-foreground">
+                  · 🔥 {habit.streak}d streak
                 </span>
               )}
             </div>

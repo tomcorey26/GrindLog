@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +14,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
-import { formatTime, formatElapsed, formatRemaining } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { useHaptics } from "@/hooks/use-haptics";
+import { useTimerStore } from "@/stores/timer-store";
 import type { Habit } from "@/lib/types";
 
 export function HabitCard({
@@ -144,23 +144,8 @@ function ActiveTimerCard({
 }) {
   const activeTimer = habit.activeTimer!;
   const isCountdown = activeTimer.targetDurationSeconds !== null;
-
-  const [display, setDisplay] = useState(() =>
-    isCountdown
-      ? formatRemaining(activeTimer.startTime, activeTimer.targetDurationSeconds!)
-      : formatElapsed(activeTimer.startTime),
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDisplay(
-        isCountdown
-          ? formatRemaining(activeTimer.startTime, activeTimer.targetDurationSeconds!)
-          : formatElapsed(activeTimer.startTime),
-      );
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [activeTimer.startTime, activeTimer.targetDurationSeconds, isCountdown]);
+  const displayTime = useTimerStore((s) => s.displayTime);
+  const isTimesUp = useTimerStore((s) => s.isTimesUp);
 
   return (
     <Card
@@ -181,14 +166,22 @@ function ActiveTimerCard({
         </h3>
 
         <p className="text-3xl font-mono font-light tracking-tight text-primary">
-          {display}
+          {displayTime}
         </p>
 
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-sm text-muted-foreground">
-            {isCountdown ? "Counting down..." : "Recording..."}
-          </span>
+          {isTimesUp ? (
+            <span className="text-sm font-semibold text-primary">
+              Time&apos;s up!
+            </span>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-sm text-muted-foreground">
+                {isCountdown ? "Counting down..." : "Recording..."}
+              </span>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

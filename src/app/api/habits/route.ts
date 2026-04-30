@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUserId } from "@/lib/auth";
-import { createHabitForUser, getHabitsForUser } from "@/server/db/habits";
+import { createHabitForUser, getHabitsForUser, getHabitByNameForUser } from "@/server/db/habits";
 
 const createHabitSchema = z.object({
   name: z.string().min(1).max(30),
@@ -30,8 +30,16 @@ export async function POST(request: Request) {
   const parsed = createHabitSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Name is required (max 100 chars)" },
+      { error: "Name is required (max 30 chars)" },
       { status: 400 },
+    );
+  }
+
+  const existing = await getHabitByNameForUser(userId, parsed.data.name);
+  if (existing) {
+    return NextResponse.json(
+      { error: "A habit with this name already exists" },
+      { status: 409 },
     );
   }
 

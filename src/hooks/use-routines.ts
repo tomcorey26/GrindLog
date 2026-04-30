@@ -19,12 +19,16 @@ type CreateRoutineInput = {
 
 type UpdateRoutineInput = CreateRoutineInput & { id: number };
 
+const ROUTINES_STALE_TIME = 30_000;
+
 export function useRoutines(initialData?: Routine[]) {
   return useSuspenseQuery({
     queryKey: queryKeys.routines.all,
     queryFn: () => api<{ routines: Routine[] }>("/api/routines"),
     select: (data) => data.routines,
-    ...(initialData ? { initialData: { routines: initialData } } : {}),
+    ...(initialData
+      ? { initialData: { routines: initialData }, staleTime: ROUTINES_STALE_TIME }
+      : {}),
   });
 }
 
@@ -33,7 +37,9 @@ export function useRoutine(id: number, initialData?: Routine) {
     queryKey: queryKeys.routines.detail(id),
     queryFn: () => api<{ routine: Routine }>(`/api/routines/${id}`),
     select: (data) => data.routine,
-    ...(initialData ? { initialData: { routine: initialData } } : {}),
+    ...(initialData
+      ? { initialData: { routine: initialData }, staleTime: ROUTINES_STALE_TIME }
+      : {}),
   });
 }
 
@@ -58,11 +64,13 @@ export function useUpdateRoutine() {
         method: "PUT",
         body: JSON.stringify(data),
       }),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.routines.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.routines.detail(variables.id),
-      });
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.routines.detail(variables.id),
+        }),
+      ]);
     },
   });
 }
@@ -72,7 +80,13 @@ export function useDeleteRoutine() {
   return useMutation({
     mutationFn: (id: number) =>
       api(`/api/routines/${id}`, { method: "DELETE" }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.routines.all }),
+    onSuccess: async (_data, id) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.routines.detail(id),
+        }),
+      ]);
+    },
   });
 }

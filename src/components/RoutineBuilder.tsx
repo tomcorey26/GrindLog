@@ -22,7 +22,7 @@ import { RoutineBlockCard } from "@/components/RoutineBlockCard";
 import { HabitPicker } from "@/components/HabitPicker";
 import { HabitBlockConfigForm } from "@/components/HabitBlockConfigForm";
 import { useHabits, useAddHabit } from "@/hooks/use-habits";
-import { useCreateRoutine, useUpdateRoutine } from "@/hooks/use-routines";
+import { useCreateRoutine, useUpdateRoutine, useDeleteRoutine } from "@/hooks/use-routines";
 import { useHaptics } from "@/hooks/use-haptics";
 import type { RoutineBuilderState } from "@/hooks/use-routine-builder";
 import type { Habit } from "@/lib/types";
@@ -45,6 +45,7 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
   const addHabit = useAddHabit();
   const createRoutine = useCreateRoutine();
   const updateRoutine = useUpdateRoutine();
+  const deleteRoutine = useDeleteRoutine();
 
   const {
     routineId,
@@ -64,6 +65,7 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
 
   const [pickerView, setPickerView] = useState<PickerView>({ type: "closed" });
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const isSaving = createRoutine.isPending || updateRoutine.isPending;
   const canSave = name.trim().length > 0 && blocks.length > 0;
@@ -99,6 +101,18 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
     router.push("/routines");
   }
 
+  async function handleDelete() {
+    if (!routineId) return;
+    try {
+      await deleteRoutine.mutateAsync(routineId);
+      toast.success("Routine deleted");
+      trigger("success");
+      router.push("/routines");
+    } catch {
+      toast.error("Failed to delete routine");
+    }
+  }
+
   async function handleSave() {
     if (!canSave) return;
     try {
@@ -111,7 +125,9 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
         toast.success("Routine updated");
       }
       trigger("success");
-      router.push("/routines");
+      // Mark builder as clean so beforeunload and discard dialog don't trigger
+      builder.markClean();
+      router.replace("/routines");
     } catch {
       toast.error("Failed to save routine");
     }
@@ -146,14 +162,18 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
   }
 
   return (
-    <div className="flex flex-col min-h-0 flex-1 -mt-0.5 md:-mt-6">
+    <div className="relative flex flex-col flex-1 -mt-0.5 md:-mt-6">
       <RoutineStickyHeader
         totalMinutes={totalMinutes}
         habitCount={blocks.length}
+        onBack={handleDiscard}
         onDiscard={handleDiscard}
         onSave={handleSave}
+        onDelete={mode === "edit" ? () => setShowDeleteDialog(true) : undefined}
         isSaving={isSaving}
         canSave={canSave}
+        isDirty={isDirty}
+        mode={mode}
       />
 
       <div className="flex-1 py-4 space-y-4">
@@ -204,7 +224,7 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
 
       {/* Habit picker modal */}
       {pickerView.type !== "closed" && (
-        <div className="fixed inset-0 z-50 bg-background">
+        <div className="absolute inset-0 z-50 bg-background">
           {pickerView.type === "list" ? (
             <HabitPicker
               habits={habits}
@@ -238,6 +258,27 @@ export function RoutineBuilder({ mode, initialHabits, builder }: RoutineBuilderP
               onClick={handleConfirmDiscard}
             >
               Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete routine?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{name || "this routine"}&rdquo; and all its data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDelete}
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

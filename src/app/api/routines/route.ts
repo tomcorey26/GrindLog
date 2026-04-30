@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUserId } from "@/lib/auth";
-import { getRoutinesForUser, createRoutineForUser } from "@/server/db/routines";
+import { getRoutinesForUser, createRoutineForUser, getRoutineByNameForUser } from "@/server/db/routines";
 
 const setSchema = z.object({
   durationSeconds: z.number().min(60).max(7200),
@@ -49,6 +49,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const existing = await getRoutineByNameForUser(userId, parsed.data.name);
+  if (existing) {
+    return NextResponse.json(
+      { error: "A routine with this name already exists" },
+      { status: 409 },
+    );
+  }
+
   const routine = await createRoutineForUser(userId, parsed.data);
+  if (!routine)
+    return NextResponse.json({ error: "Invalid habit references" }, { status: 400 });
   return NextResponse.json({ routine }, { status: 201 });
 }

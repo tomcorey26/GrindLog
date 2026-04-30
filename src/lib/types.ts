@@ -42,7 +42,9 @@ export type Routine = {
   updatedAt: string;
 };
 
-export type BuilderSet = RoutineSet;
+export type BuilderSet = RoutineSet & {
+  clientId: string;
+};
 
 export type BuilderBlock = {
   clientId: string;

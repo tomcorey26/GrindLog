@@ -1,2 +1,2 @@
-export const APP_NAME = "GrindLog";
-export const APP_NAME_SHORT = "GrindLog";
+export const APP_NAME = "LogBro";
+export const APP_NAME_SHORT = "LogBro";

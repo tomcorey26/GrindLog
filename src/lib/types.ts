@@ -10,7 +10,7 @@ export type Habit = {
   } | null;
 };
 
-export type Session = {
+export type HistoryEntry = {
   id: number;
   habitName: string;
   habitId: number;

@@ -1,25 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionUserId, deleteSessionForUser } = vi.hoisted(() => ({
+const { getSessionUserId, deleteHistoryEntry } = vi.hoisted(() => ({
   getSessionUserId: vi.fn(),
-  deleteSessionForUser: vi.fn(),
+  deleteHistoryEntry: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
   getSessionUserId,
 }));
 
-vi.mock("@/server/db/sessions", () => ({
-  deleteSessionForUser,
+vi.mock("@/server/db/history", () => ({
+  deleteHistoryEntry,
 }));
 
 import { DELETE } from "./route";
 
 function makeRequest() {
-  return new Request("http://localhost/api/sessions/5", { method: "DELETE" });
+  return new Request("http://localhost/api/history/5", { method: "DELETE" });
 }
 
-describe("DELETE /api/sessions/[id]", () => {
+describe("DELETE /api/history/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -37,7 +37,7 @@ describe("DELETE /api/sessions/[id]", () => {
     });
   });
 
-  it("returns 400 for invalid session id", async () => {
+  it("returns 400 for invalid entry id", async () => {
     getSessionUserId.mockResolvedValue(42);
 
     const response = await DELETE(makeRequest(), {
@@ -50,9 +50,9 @@ describe("DELETE /api/sessions/[id]", () => {
     });
   });
 
-  it("returns 404 when session not found or not owned by user", async () => {
+  it("returns 404 when entry not found or not owned by user", async () => {
     getSessionUserId.mockResolvedValue(42);
-    deleteSessionForUser.mockResolvedValue(null);
+    deleteHistoryEntry.mockResolvedValue(null);
 
     const response = await DELETE(makeRequest(), {
       params: Promise.resolve({ id: "5" }),
@@ -62,12 +62,12 @@ describe("DELETE /api/sessions/[id]", () => {
     await expect(response.json()).resolves.toEqual({
       error: "Not found",
     });
-    expect(deleteSessionForUser).toHaveBeenCalledWith(5, 42);
+    expect(deleteHistoryEntry).toHaveBeenCalledWith(5, 42);
   });
 
-  it("deletes session and returns ok", async () => {
+  it("deletes entry and returns ok", async () => {
     getSessionUserId.mockResolvedValue(42);
-    deleteSessionForUser.mockResolvedValue({ id: 5 });
+    deleteHistoryEntry.mockResolvedValue({ id: 5 });
 
     const response = await DELETE(makeRequest(), {
       params: Promise.resolve({ id: "5" }),
@@ -75,6 +75,6 @@ describe("DELETE /api/sessions/[id]", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
-    expect(deleteSessionForUser).toHaveBeenCalledWith(5, 42);
+    expect(deleteHistoryEntry).toHaveBeenCalledWith(5, 42);
   });
 });

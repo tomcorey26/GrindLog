@@ -2,14 +2,14 @@ import { and, desc, eq, gte } from "drizzle-orm";
 
 import { db } from "@/db";
 import { habits, timeSessions } from "@/db/schema";
-import type { Session } from "@/lib/types";
+import type { HistoryEntry } from "@/lib/types";
 
-type SessionFilters = {
+type HistoryFilters = {
   habitId?: string;
   range?: string;
 };
 
-type ManualSessionInput = {
+type ManualHistoryInput = {
   userId: number;
   habitId: number;
   startTime: Date;
@@ -17,10 +17,10 @@ type ManualSessionInput = {
   durationSeconds: number;
 };
 
-export async function getSessionsForUser(
+export async function getHistoryForUser(
   userId: number,
-  filters: SessionFilters,
-): Promise<{ sessions: Session[]; totalSeconds: number }> {
+  filters: HistoryFilters,
+): Promise<{ history: HistoryEntry[]; totalSeconds: number }> {
   const dateFilter = getDateFilter(filters.range);
 
   const conditions = [eq(habits.userId, userId)];
@@ -46,7 +46,7 @@ export async function getSessionsForUser(
   const totalSeconds = rows.reduce((sum, row) => sum + row.durationSeconds, 0);
 
   return {
-    sessions: rows.map((row) => ({
+    history: rows.map((row) => ({
       ...row,
       startTime: row.startTime.toISOString(),
       endTime: row.endTime.toISOString(),
@@ -55,13 +55,13 @@ export async function getSessionsForUser(
   };
 }
 
-export async function createManualSessionForUser({
+export async function createManualHistoryEntry({
   userId,
   habitId,
   startTime,
   endTime,
   durationSeconds,
-}: ManualSessionInput) {
+}: ManualHistoryInput) {
   const habit = await db
     .select({ id: habits.id })
     .from(habits)
@@ -70,7 +70,7 @@ export async function createManualSessionForUser({
 
   if (!habit) return null;
 
-  const [session] = await db
+  const [entry] = await db
     .insert(timeSessions)
     .values({
       habitId,
@@ -82,17 +82,17 @@ export async function createManualSessionForUser({
     })
     .returning();
 
-  return session;
+  return entry;
 }
 
-export async function deleteSessionForUser(
-  sessionId: number,
+export async function deleteHistoryEntry(
+  entryId: number,
   userId: number,
 ) {
   const [deleted] = await db
     .delete(timeSessions)
     .where(
-      and(eq(timeSessions.id, sessionId), eq(timeSessions.userId, userId)),
+      and(eq(timeSessions.id, entryId), eq(timeSessions.userId, userId)),
     )
     .returning();
 

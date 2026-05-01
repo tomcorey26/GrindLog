@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionToken } from '@/lib/auth';
 
-const PROTECTED_ROUTES = ['/habits', '/routines', '/sessions', '/rankings', '/timer', '/account'];
+const PROTECTED_ROUTES = ['/habits', '/routines', '/history', '/rankings', '/timer', '/account'];
 const AUTH_ROUTES = ['/login'];
 
 // In-memory rate limiter for auth endpoints

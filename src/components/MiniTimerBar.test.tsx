@@ -7,7 +7,7 @@ import { useTimerStore } from "@/stores/timer-store";
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
-  usePathname: () => "/sessions",
+  usePathname: () => "/history",
 }));
 
 vi.mock("@/hooks/use-haptics", () => ({

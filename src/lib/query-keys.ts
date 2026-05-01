@@ -5,10 +5,10 @@ export const queryKeys = {
   habits: {
     all: ['habits'] as const,
   },
-  sessions: {
-    all: ['sessions'] as const,
+  history: {
+    all: ['history'] as const,
     list: (filters: { habitId?: string; range?: string; viewMode: string }) =>
-      ['sessions', 'list', filters] as const,
+      ['history', 'list', filters] as const,
   },
   rankings: {
     all: ['rankings'] as const,

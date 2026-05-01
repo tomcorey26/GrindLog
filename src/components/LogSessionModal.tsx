@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useLogSession } from "@/hooks/use-sessions";
+import { useLogHistory } from "@/hooks/use-history";
 import { ApiError } from "@/lib/api";
 import { useHaptics } from "@/hooks/use-haptics";
 
@@ -46,7 +46,7 @@ export function LogSessionModal({
   const [minutes, setMinutes] = useState("");
   const [error, setError] = useState("");
 
-  const logSession = useLogSession();
+  const logHistory = useLogHistory();
   const { trigger } = useHaptics();
 
   const durationMinutes = Number(minutes);
@@ -55,7 +55,7 @@ export function LogSessionModal({
   function handleSave() {
     if (!isValid) return;
     setError("");
-    logSession.mutate(
+    logHistory.mutate(
       { habitId, date, durationMinutes },
       {
         onSuccess: () => {
@@ -122,10 +122,10 @@ export function LogSessionModal({
           </Button>
           <Button
             className="flex-1"
-            disabled={!isValid || logSession.isPending}
+            disabled={!isValid || logHistory.isPending}
             onClick={handleSave}
           >
-            {logSession.isPending ? "Saving..." : "Save"}
+            {logHistory.isPending ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>

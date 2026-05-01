@@ -39,7 +39,7 @@ Three-stage multi-stage build:
 Coolify uses Traefik to route multiple domains to different apps on one server:
 
 ```
-myapp.com          → GrindLog app
+myapp.com          → LogBro app
 coolify.myapp.com  → Coolify dashboard
 other.myapp.com    → another app
 ```

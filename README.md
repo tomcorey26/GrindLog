@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/web-app-manifest-512x512.png" alt="GrindLog" width="120" height="120" style="border-radius: 24px;" />
+  <img src="public/web-app-manifest-512x512.png" alt="LogBro" width="120" height="120" style="border-radius: 24px;" />
 </p>
 
-<h1 align="center">GrindLog</h1>
+<h1 align="center">LogBro</h1>
 
 <p align="center">
   <em>A workout tracker, but for skills.</em>
@@ -19,7 +19,7 @@
 
 The "10,000 hours" rule says it takes roughly 10,000 hours of deliberate practice to master a skill. Whether or not the exact number holds up, the core truth is real: consistent, tracked practice is how you get better at anything.
 
-GrindLog is a PWA I built to scratch my own itch — I wanted a simple way to time my practice sessions across multiple skills, stack them into daily routines, and actually see the hours add up over time. Think of it like a gym tracker, but for your brain.
+LogBro is a PWA I built to scratch my own itch — I wanted a simple way to time my practice sessions across multiple skills, stack them into daily routines, and actually see the hours add up over time. Think of it like a gym tracker, but for your brain.
 
 ## What It Does
 

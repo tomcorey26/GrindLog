@@ -69,9 +69,9 @@ export function RoutineSessionSummary({ summary, onDiscard, onSaved, onBack }: P
           <h3 className="text-xl font-bold mb-1">{summary.routineNameSnapshot}</h3>
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-4">Complete</p>
           <p className="text-5xl font-mono font-light tracking-tight text-foreground">
-            {formatTime(summary.totalElapsedSeconds)}
+            {formatTime(summary.totalActiveSeconds)}
           </p>
-          <p className="text-xs text-muted-foreground mt-2">total time</p>
+          <p className="text-xs text-muted-foreground mt-2">active time</p>
         </Card>
 
         {/* Stats row */}
@@ -84,11 +84,11 @@ export function RoutineSessionSummary({ summary, onDiscard, onSaved, onBack }: P
             </p>
           </Card>
           <Card className="p-4 flex flex-col items-center text-center">
-            <Activity className="h-5 w-5 text-primary mb-1.5" />
-            <p className="text-2xl font-bold font-mono">
-              {formatTime(summary.totalActiveSeconds)}
+            <Activity className="h-5 w-5 text-muted-foreground mb-1.5" />
+            <p className="text-2xl font-bold font-mono text-muted-foreground">
+              {formatTime(summary.totalElapsedSeconds)}
             </p>
-            <p className="text-xs text-muted-foreground">active time</p>
+            <p className="text-xs text-muted-foreground">elapsed</p>
           </Card>
         </div>
 

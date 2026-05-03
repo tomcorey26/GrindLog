@@ -240,8 +240,72 @@ export async function startSetForUser(
     return await reloadActiveSession(tx, userId);
   });
 }
-export async function completeSetForUser(_userId: number, _setRowId: number, _endedAt?: Date) {
-  throw new Error('not implemented');
+export async function completeSetForUser(
+  userId: number,
+  setRowId: number,
+  endedAt?: Date,
+): Promise<ActiveRoutineSession | null> {
+  return db.transaction(async (tx) => {
+    const timerRow = await tx
+      .select()
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+
+    const set = await tx
+      .select()
+      .from(routineSessionSets)
+      .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+      .where(
+        and(
+          eq(routineSessionSets.id, setRowId),
+          eq(routineSessions.userId, userId),
+          eq(routineSessions.status, 'active'),
+        ),
+      )
+      .get();
+    if (!set) return null;
+    const setRow = set.routine_session_sets;
+
+    const now = endedAt ?? new Date();
+
+    // Compute actual duration: prefer the timer for cleanest math; fall back to set.startedAt.
+    const startedAt = setRow.startedAt ?? timerRow?.startTime ?? now;
+    const elapsed = Math.max(0, Math.ceil((now.getTime() - startedAt.getTime()) / 1000));
+    const actualDurationSeconds = Math.min(elapsed, setRow.plannedDurationSeconds);
+
+    await tx
+      .update(routineSessionSets)
+      .set({ actualDurationSeconds, completedAt: now })
+      .where(eq(routineSessionSets.id, setRow.id));
+
+    if (timerRow && timerRow.routineSessionSetId === setRow.id) {
+      await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    }
+
+    // Decide next phase using pure helper
+    const allSetRows = await tx
+      .select()
+      .from(routineSessionSets)
+      .where(eq(routineSessionSets.sessionId, setRow.sessionId));
+    const next = computeNextPhase({
+      sets: allSetRows.map(rowToSet),
+      completedSetId: setRow.id,
+    });
+
+    if (next.phase === 'break' && setRow.habitId) {
+      await tx.insert(activeTimers).values({
+        habitId: setRow.habitId,
+        userId,
+        startTime: now,
+        targetDurationSeconds: next.breakSeconds,
+        routineSessionSetId: setRow.id,
+        phase: 'break',
+      });
+    }
+
+    return await reloadActiveSession(tx, userId);
+  });
 }
 export async function patchSetForUser(_userId: number, _setRowId: number, _patch: { plannedDurationSeconds?: number; plannedBreakSeconds?: number; actualDurationSeconds?: number }) {
   throw new Error('not implemented');

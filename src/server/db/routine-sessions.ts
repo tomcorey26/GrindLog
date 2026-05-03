@@ -242,6 +242,7 @@ export async function saveActiveRoutineSessionForUser(
         endTime: end,
         durationSeconds: r.actualDurationSeconds!,
         timerMode: 'routine',
+        routineSessionId: session.id,
       });
     }
 

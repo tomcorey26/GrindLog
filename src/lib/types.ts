@@ -100,3 +100,17 @@ export type RoutineSessionSummary = {
   completedSetCount: number;
   byHabit: Array<{ habitName: string; sets: number; totalSeconds: number }>;
 };
+
+export type HistoryRoutineGroup = {
+  kind: 'routine';
+  routineSessionId: number;
+  routineNameSnapshot: string;
+  startedAt: string;
+  finishedAt: string;
+  totalDurationSeconds: number;
+  entries: HistoryEntry[];
+};
+
+export type HistoryListItem =
+  | { kind: 'session'; entry: HistoryEntry }
+  | HistoryRoutineGroup;

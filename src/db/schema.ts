@@ -23,6 +23,7 @@ export const timeSessions = sqliteTable('time_sessions', {
   endTime: integer('end_time', { mode: 'timestamp' }).notNull(),
   durationSeconds: integer('duration_seconds').notNull(),
   timerMode: text('timer_mode').notNull().$default(() => 'stopwatch'),
+  routineSessionId: integer('routine_session_id').references(() => routineSessions.id, { onDelete: 'set null' }),
 }, (table) => [
   uniqueIndex('time_sessions_user_start_uniq').on(table.userId, table.startTime),
 ]);

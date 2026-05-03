@@ -29,6 +29,15 @@ function fmtMins(s: number) {
   return `${Math.round(s / 60)} min`;
 }
 
+function fmtMinSec(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
 export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, progressPct, onStart, onEnd, onSkipBreak, onPatch }: Props) {
   const isUpcoming = state === 'upcoming-idle' || state === 'upcoming-disabled';
   const isCompleted = state === 'completed';
@@ -72,13 +81,9 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, progre
           aria-label={`Set ${setNumber} duration in minutes`}
         />
       ) : isCompleted ? (
-        <Stepper
-          value={Math.round((set.actualDurationSeconds ?? 0) / 60)}
-          min={0}
-          max={120}
-          onChange={(mins) => onPatch({ actualDurationSeconds: mins * 60 })}
-          aria-label={`Set ${setNumber} duration in minutes`}
-        />
+        <span className="text-sm font-mono text-foreground">
+          {fmtMinSec(set.actualDurationSeconds ?? 0)}
+        </span>
       ) : isRunning ? (
         <span className="inline-flex items-center gap-1.5 text-base font-mono font-bold text-primary">
           <Timer className="h-4 w-4" />

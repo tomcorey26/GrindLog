@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeNextPhase, computeReplayForward, computeSummary } from './routine-session';
-import type { RoutineSessionSet, RoutineSessionActiveTimer } from './types';
+import { computeNextPhase, computeReplayForward, computeSummary, snapshotRoutineToSets } from './routine-session';
+import type { RoutineSessionSet, RoutineSessionActiveTimer, Routine } from './types';
 
 function makeSet(partial: Partial<RoutineSessionSet> & { blockIndex: number; setIndex: number }): RoutineSessionSet {
   return {
@@ -116,6 +116,44 @@ describe('computeSummary', () => {
     expect(result.completedSetCount).toBe(2);
     expect(result.byHabit).toEqual([
       { habitName: 'Guitar', sets: 2, totalSeconds: 90 },
+    ]);
+  });
+});
+
+describe('snapshotRoutineToSets', () => {
+  it('flattens routine blocks into ordered session sets', () => {
+    const routine: Routine = {
+      id: 1,
+      name: 'Morning',
+      blocks: [
+        {
+          id: 10,
+          habitId: 100,
+          habitName: 'Guitar',
+          sortOrder: 0,
+          notes: 'warm up',
+          sets: [
+            { durationSeconds: 60, breakSeconds: 30 },
+            { durationSeconds: 90, breakSeconds: 0 },
+          ],
+        },
+        {
+          id: 11,
+          habitId: 200,
+          habitName: 'Piano',
+          sortOrder: 1,
+          notes: null,
+          sets: [{ durationSeconds: 120, breakSeconds: 60 }],
+        },
+      ],
+      createdAt: '',
+      updatedAt: '',
+    };
+    const result = snapshotRoutineToSets(routine);
+    expect(result).toEqual([
+      { blockIndex: 0, setIndex: 0, habitId: 100, habitNameSnapshot: 'Guitar', notesSnapshot: 'warm up', plannedDurationSeconds: 60, plannedBreakSeconds: 30 },
+      { blockIndex: 0, setIndex: 1, habitId: 100, habitNameSnapshot: 'Guitar', notesSnapshot: 'warm up', plannedDurationSeconds: 90, plannedBreakSeconds: 0 },
+      { blockIndex: 1, setIndex: 0, habitId: 200, habitNameSnapshot: 'Piano', notesSnapshot: null, plannedDurationSeconds: 120, plannedBreakSeconds: 60 },
     ]);
   });
 });

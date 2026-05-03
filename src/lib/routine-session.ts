@@ -1,4 +1,4 @@
-import type { RoutineSessionActiveTimer, RoutineSessionSet, RoutineSessionSummary } from './types';
+import type { Routine, RoutineSessionActiveTimer, RoutineSessionSet, RoutineSessionSummary } from './types';
 
 export type NextPhaseInput = {
   sets: RoutineSessionSet[];
@@ -79,4 +79,29 @@ export function computeSummary(input: {
     completedSetCount: completed.length,
     byHabit: Array.from(byHabitMap, ([habitName, v]) => ({ habitName, ...v })),
   };
+}
+
+export type SnapshotInsert = {
+  blockIndex: number;
+  setIndex: number;
+  habitId: number;
+  habitNameSnapshot: string;
+  notesSnapshot: string | null;
+  plannedDurationSeconds: number;
+  plannedBreakSeconds: number;
+};
+
+export function snapshotRoutineToSets(routine: Routine): SnapshotInsert[] {
+  const sortedBlocks = [...routine.blocks].sort((a, b) => a.sortOrder - b.sortOrder);
+  return sortedBlocks.flatMap((block, blockIndex) =>
+    block.sets.map((set, setIndex) => ({
+      blockIndex,
+      setIndex,
+      habitId: block.habitId,
+      habitNameSnapshot: block.habitName,
+      notesSnapshot: block.notes,
+      plannedDurationSeconds: set.durationSeconds,
+      plannedBreakSeconds: set.breakSeconds,
+    })),
+  );
 }

@@ -181,11 +181,81 @@ export async function discardActiveRoutineSessionForUser(
     return { discarded: true };
   });
 }
-export async function buildSummaryForUser(_userId: number) {
-  throw new Error('not implemented');
+export async function buildSummaryForUser(
+  userId: number,
+): Promise<
+  | { ok: true; summary: import('@/lib/types').RoutineSessionSummary }
+  | { ok: false; reason: 'no_active_session' | 'no_completed_sets' }
+> {
+  const session = await db
+    .select()
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  if (!session) return { ok: false, reason: 'no_active_session' };
+
+  const setRows = await db
+    .select()
+    .from(routineSessionSets)
+    .where(eq(routineSessionSets.sessionId, session.id));
+
+  const sets = setRows.map(rowToSet);
+  const completed = sets.filter((s) => (s.actualDurationSeconds ?? 0) > 0);
+  if (completed.length === 0) return { ok: false, reason: 'no_completed_sets' };
+
+  const summary = computeSummary({
+    routineNameSnapshot: session.routineNameSnapshot,
+    sets,
+    startedAt: session.startedAt.toISOString(),
+    finishedAt: new Date().toISOString(),
+  });
+  return { ok: true, summary };
 }
-export async function saveActiveRoutineSessionForUser(_userId: number) {
-  throw new Error('not implemented');
+
+export async function saveActiveRoutineSessionForUser(
+  userId: number,
+): Promise<
+  | { ok: true; sessionId: number }
+  | { ok: false; reason: 'no_active_session' | 'no_completed_sets' }
+> {
+  return db.transaction(async (tx) => {
+    const session = await tx
+      .select()
+      .from(routineSessions)
+      .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+      .get();
+    if (!session) return { ok: false, reason: 'no_active_session' as const };
+
+    const setRows = await tx
+      .select()
+      .from(routineSessionSets)
+      .where(eq(routineSessionSets.sessionId, session.id));
+    const completed = setRows.filter((r) => (r.actualDurationSeconds ?? 0) > 0 && r.habitId !== null);
+    if (completed.length === 0) return { ok: false, reason: 'no_completed_sets' as const };
+
+    const now = new Date();
+    for (const r of completed) {
+      const start = r.startedAt ?? new Date(now.getTime() - (r.actualDurationSeconds ?? 0) * 1000);
+      const end = new Date(start.getTime() + (r.actualDurationSeconds ?? 0) * 1000);
+      await tx.insert(timeSessions).values({
+        habitId: r.habitId!,
+        userId,
+        startTime: start,
+        endTime: end,
+        durationSeconds: r.actualDurationSeconds!,
+        timerMode: 'routine',
+      });
+    }
+
+    await tx
+      .update(routineSessions)
+      .set({ status: 'completed', finishedAt: now })
+      .where(eq(routineSessions.id, session.id));
+
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+
+    return { ok: true, sessionId: session.id };
+  });
 }
 export async function startSetForUser(
   userId: number,

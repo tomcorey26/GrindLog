@@ -187,8 +187,58 @@ export async function buildSummaryForUser(_userId: number) {
 export async function saveActiveRoutineSessionForUser(_userId: number) {
   throw new Error('not implemented');
 }
-export async function startSetForUser(_userId: number, _setRowId: number) {
-  throw new Error('not implemented');
+export async function startSetForUser(
+  userId: number,
+  setRowId: number,
+): Promise<ActiveRoutineSession | { conflict: 'set_already_running' } | null> {
+  return db.transaction(async (tx) => {
+    const set = await tx
+      .select({
+        id: routineSessionSets.id,
+        sessionId: routineSessionSets.sessionId,
+        habitId: routineSessionSets.habitId,
+        plannedDurationSeconds: routineSessionSets.plannedDurationSeconds,
+        startedAt: routineSessionSets.startedAt,
+      })
+      .from(routineSessionSets)
+      .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+      .where(
+        and(
+          eq(routineSessionSets.id, setRowId),
+          eq(routineSessions.userId, userId),
+          eq(routineSessions.status, 'active'),
+        ),
+      )
+      .get();
+    if (!set) return null;
+    if (set.startedAt) return { conflict: 'set_already_running' as const };
+
+    const existingTimer = await tx
+      .select({ id: activeTimers.id })
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+    if (existingTimer) return { conflict: 'set_already_running' as const };
+
+    if (!set.habitId) return null; // habit deleted out from under us
+
+    const now = new Date();
+    await tx
+      .update(routineSessionSets)
+      .set({ startedAt: now })
+      .where(eq(routineSessionSets.id, set.id));
+
+    await tx.insert(activeTimers).values({
+      habitId: set.habitId,
+      userId,
+      startTime: now,
+      targetDurationSeconds: set.plannedDurationSeconds,
+      routineSessionSetId: set.id,
+      phase: 'set',
+    });
+
+    return await reloadActiveSession(tx, userId);
+  });
 }
 export async function completeSetForUser(_userId: number, _setRowId: number, _endedAt?: Date) {
   throw new Error('not implemented');

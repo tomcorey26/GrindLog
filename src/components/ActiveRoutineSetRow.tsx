@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Square, Check, SkipForward, Coffee } from 'lucide-react';
+import { Play, Square, Check, SkipForward, Coffee, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PressableButton } from '@/components/ui/pressable-button';
 import { Stepper } from '@/components/ui/stepper';
@@ -18,7 +18,7 @@ type Props = {
   setNumber: number;
   state: SetRowState;
   displayTime: string;
-  breakProgressPct?: number;
+  progressPct?: number;
   onStart: () => void;
   onEnd: () => void;
   onSkipBreak: () => void;
@@ -29,7 +29,7 @@ function fmtMins(s: number) {
   return `${Math.round(s / 60)} min`;
 }
 
-export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, breakProgressPct, onStart, onEnd, onSkipBreak, onPatch }: Props) {
+export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, progressPct, onStart, onEnd, onSkipBreak, onPatch }: Props) {
   const isUpcoming = state === 'upcoming-idle' || state === 'upcoming-disabled';
   const isCompleted = state === 'completed';
   const isRunning = state === 'running';
@@ -77,9 +77,14 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, breakP
           onChange={(mins) => onPatch({ actualDurationSeconds: mins * 60 })}
           aria-label={`Set ${setNumber} duration in minutes`}
         />
+      ) : isRunning ? (
+        <span className="inline-flex items-center gap-1.5 text-base font-mono font-bold text-primary">
+          <Timer className="h-4 w-4" />
+          <span>{displayTime}</span>
+        </span>
       ) : (
-        <span className={`text-sm font-mono ${isRunning ? 'text-primary font-semibold' : isBreak ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-          {isRunning ? displayTime : fmtMins(set.plannedDurationSeconds)}
+        <span className={`text-sm font-mono ${isBreak ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+          {fmtMins(set.plannedDurationSeconds)}
         </span>
       )}
 
@@ -138,11 +143,17 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, breakP
         )}
       </div>
 
-      {isBreak && breakProgressPct !== undefined && (
-        <div className="absolute left-0 right-0 bottom-0 h-1 bg-amber-500/20 rounded-b overflow-hidden">
+      {(isBreak || isRunning) && progressPct !== undefined && (
+        <div
+          className={`absolute left-0 right-0 bottom-0 h-1 rounded-b overflow-hidden ${
+            isBreak ? 'bg-amber-500/20' : 'bg-primary/20'
+          }`}
+        >
           <div
-            className="h-full bg-amber-500 transition-[width] duration-1000 ease-linear"
-            style={{ width: `${breakProgressPct * 100}%` }}
+            className={`h-full transition-[width] duration-1000 ease-linear ${
+              isBreak ? 'bg-amber-500' : 'bg-primary'
+            }`}
+            style={{ width: `${progressPct * 100}%` }}
             aria-hidden="true"
           />
         </div>

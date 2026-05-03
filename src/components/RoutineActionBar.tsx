@@ -83,7 +83,7 @@ export function RoutineActionBar() {
           size="sm"
           onClick={handleFinish}
           disabled={finish.isPending}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_5px_0_0_color-mix(in_srgb,#059669_70%,black)] active:shadow-none active:translate-y-1.25"
         >
           {finish.isPending ? 'Finishing...' : 'Finish'}
         </PressableButton>

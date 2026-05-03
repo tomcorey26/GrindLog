@@ -70,8 +70,8 @@ export function ActiveRoutineView() {
     return activeTimer ? ('upcoming-disabled' as const) : ('upcoming-idle' as const);
   }
 
-  function breakProgressPct(): number | undefined {
-    if (!activeTimer || activeTimer.phase !== 'break') return undefined;
+  function activeTimerProgressPct(): number | undefined {
+    if (!activeTimer) return undefined;
     const elapsed = (Date.now() - new Date(activeTimer.startTime).getTime()) / 1000;
     const pct = 1 - elapsed / activeTimer.targetDurationSeconds;
     return Math.max(0, Math.min(1, pct));
@@ -120,7 +120,10 @@ export function ActiveRoutineView() {
                 set,
                 state,
                 displayTime,
-                breakProgressPct: state === 'break-running' ? breakProgressPct() : undefined,
+                progressPct:
+                  state === 'running' || state === 'break-running'
+                    ? activeTimerProgressPct()
+                    : undefined,
                 onStart: () => startSet.mutate(set.id),
                 onEnd: () => completeSet.mutate({ setRowId: set.id }),
                 onSkipBreak: () => skipBreak.mutate(),

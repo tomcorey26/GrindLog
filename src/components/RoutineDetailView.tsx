@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Clock, Layers } from "lucide-react";
+import { ArrowLeft, Clock, Layers, Loader2 } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -107,7 +107,14 @@ export function RoutineDetailView({
       {/* Sticky footer */}
       <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border -mx-4 md:-mx-6 px-4 md:px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <Button className="w-full" onClick={start} disabled={startSession.isPending}>
-          Start Routine
+          {startSession.isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Starting...
+            </>
+          ) : (
+            'Start Routine'
+          )}
         </Button>
       </div>
 

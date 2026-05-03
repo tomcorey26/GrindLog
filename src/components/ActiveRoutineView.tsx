@@ -13,6 +13,7 @@ import { RoutineBlockCard } from '@/components/RoutineBlockCard';
 import { DiscardRoutineDialog } from '@/components/DiscardRoutineDialog';
 import { NoSetsCompletedDialog } from '@/components/NoSetsCompletedDialog';
 import { RoutineSessionSummary } from '@/components/RoutineSessionSummary';
+import { Spinner } from '@/components/Spinner';
 import { useHaptics } from '@/hooks/use-haptics';
 import { ApiError } from '@/lib/api';
 import type { RoutineSessionSet } from '@/lib/types';
@@ -54,7 +55,7 @@ export function ActiveRoutineView() {
     );
   }
 
-  if (!session) return null;
+  if (!session) return <Spinner />;
 
   const blocks = groupSetsByBlock(session.sets);
   const activeTimer = session.activeTimer;

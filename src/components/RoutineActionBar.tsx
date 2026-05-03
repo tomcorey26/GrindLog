@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Trophy } from 'lucide-react';
+import { Trophy, Play } from 'lucide-react';
 import { useRoutineSessionStore } from '@/stores/routine-session-store';
-import { useFinishRoutineSession } from '@/hooks/use-active-routine';
+import { useFinishRoutineSession, useStartSet } from '@/hooks/use-active-routine';
 import { useHaptics } from '@/hooks/use-haptics';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api';
@@ -17,6 +17,7 @@ export function RoutineActionBar() {
   const displayTime = useRoutineSessionStore((s) => s.displayTime);
   const mode = useRoutineSessionStore((s) => s.mode);
   const finish = useFinishRoutineSession();
+  const startSet = useStartSet();
 
   if (mode !== 'active' || !session) return null;
 
@@ -27,6 +28,18 @@ export function RoutineActionBar() {
 
   function navigateToActive() {
     if (session?.routineId) router.push(`/routines/${session.routineId}/active`);
+  }
+
+  function handleNavigate() {
+    trigger('light');
+    navigateToActive();
+  }
+
+  function handleNavigateKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleNavigate();
+    }
   }
 
   async function handleFinish(e: React.MouseEvent) {
@@ -47,13 +60,12 @@ export function RoutineActionBar() {
 
   if (allComplete) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          trigger('light');
-          navigateToActive();
-        }}
-        className="w-full px-4 py-3 bg-emerald-500/15 border-t border-emerald-500/40 flex items-center justify-between hover:bg-emerald-500/20 transition-colors"
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleNavigate}
+        onKeyDown={handleNavigateKey}
+        className="w-full px-4 py-3 bg-emerald-500/15 border-t border-emerald-500/40 flex items-center justify-between hover:bg-emerald-500/20 transition-colors cursor-pointer"
         aria-label="Open completed routine"
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -75,7 +87,7 @@ export function RoutineActionBar() {
         >
           {finish.isPending ? 'Finishing...' : 'Finish'}
         </Button>
-      </button>
+      </div>
     );
   }
 
@@ -88,20 +100,27 @@ export function RoutineActionBar() {
     return nextIdle >= 0 ? nextIdle : totalSets - 1;
   })();
   const currentSet = session.sets[currentSetIndex];
+  const isIdle = !activeTimer;
+
+  function handleStartSet(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!currentSet) return;
+    trigger('medium');
+    startSet.mutate(currentSet.id);
+  }
 
   let phaseLabel: string;
   if (activeTimer?.phase === 'set') phaseLabel = 'Recording';
   else if (activeTimer?.phase === 'break') phaseLabel = 'Resting';
-  else phaseLabel = `Tap to start set ${currentSetIndex + 1}`;
+  else phaseLabel = `Ready for set ${currentSetIndex + 1}`;
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        trigger('light');
-        navigateToActive();
-      }}
-      className="w-full px-4 py-3 bg-primary/10 border-t border-primary/30 flex items-center justify-between hover:bg-primary/15 transition-colors"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleNavigate}
+      onKeyDown={handleNavigateKey}
+      className="w-full px-4 py-3 bg-primary/10 border-t border-primary/30 flex items-center justify-between hover:bg-primary/15 transition-colors cursor-pointer"
       aria-label="Open active routine"
     >
       <div className="flex flex-col items-start min-w-0">
@@ -110,7 +129,18 @@ export function RoutineActionBar() {
         </span>
         <span className="text-xs text-muted-foreground">{phaseLabel}</span>
       </div>
-      <span className="font-mono text-sm">{displayTime}</span>
-    </button>
+      {isIdle ? (
+        <Button
+          size="icon-sm"
+          onClick={handleStartSet}
+          disabled={startSet.isPending}
+          aria-label={`Start set ${currentSetIndex + 1}`}
+        >
+          <Play className="h-3.5 w-3.5" />
+        </Button>
+      ) : (
+        <span className="font-mono text-sm">{displayTime}</span>
+      )}
+    </div>
   );
 }

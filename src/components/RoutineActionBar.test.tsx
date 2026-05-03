@@ -17,6 +17,10 @@ vi.mock('@/hooks/use-active-routine', () => ({
     mutateAsync: vi.fn(),
     isPending: false,
   }),
+  useStartSet: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 import { RoutineActionBar } from './RoutineActionBar';
@@ -41,6 +45,21 @@ describe('RoutineActionBar', () => {
     render(<RoutineActionBar />);
     expect(screen.getByText(/Guitar/)).toBeInTheDocument();
     expect(screen.getByText(/Set 1 of 2/i)).toBeInTheDocument();
+  });
+
+  it('shows a Play button when idle (no active timer, sets remaining)', () => {
+    useRoutineSessionStore.getState().hydrate({
+      id: 1, routineId: 1, routineNameSnapshot: 'M', status: 'active',
+      startedAt: '', finishedAt: null,
+      sets: [
+        { id: 1, sessionId: 1, blockIndex: 0, setIndex: 0, habitId: 1, habitNameSnapshot: 'Guitar', notesSnapshot: null, plannedDurationSeconds: 60, plannedBreakSeconds: 0, actualDurationSeconds: 60, startedAt: '2026-05-02T00:00:00Z', completedAt: '2026-05-02T00:01:00Z' },
+        { id: 2, sessionId: 1, blockIndex: 0, setIndex: 1, habitId: 1, habitNameSnapshot: 'Guitar', notesSnapshot: null, plannedDurationSeconds: 60, plannedBreakSeconds: 0, actualDurationSeconds: null, startedAt: null, completedAt: null },
+      ],
+      activeTimer: null,
+    });
+    render(<RoutineActionBar />);
+    expect(screen.getByRole('button', { name: /start set 2/i })).toBeInTheDocument();
+    expect(screen.getByText(/Ready for set 2/i)).toBeInTheDocument();
   });
 
   it('shows "Routine complete" + Finish button when every set is completed', () => {

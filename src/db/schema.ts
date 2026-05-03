@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -27,14 +27,6 @@ export const timeSessions = sqliteTable('time_sessions', {
   uniqueIndex('time_sessions_user_start_uniq').on(table.userId, table.startTime),
 ]);
 
-export const activeTimers = sqliteTable('active_timers', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  habitId: integer('habit_id').notNull().references(() => habits.id, { onDelete: 'cascade' }),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
-  startTime: integer('start_time', { mode: 'timestamp' }).notNull(),
-  targetDurationSeconds: integer('target_duration_seconds'),
-});
-
 export const routines = sqliteTable('routines', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -54,10 +46,52 @@ export const routineBlocks = sqliteTable('routine_blocks', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+export const routineSessions = sqliteTable('routine_sessions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  routineId: integer('routine_id').references(() => routines.id, { onDelete: 'set null' }),
+  routineNameSnapshot: text('routine_name_snapshot').notNull(),
+  status: text('status').notNull(),
+  startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+  finishedAt: integer('finished_at', { mode: 'timestamp' }),
+}, (table) => [
+  uniqueIndex('routine_sessions_one_active_per_user')
+    .on(table.userId)
+    .where(sql`status = 'active'`),
+]);
+
+export const routineSessionSets = sqliteTable('routine_session_sets', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sessionId: integer('session_id').notNull().references(() => routineSessions.id, { onDelete: 'cascade' }),
+  blockIndex: integer('block_index').notNull(),
+  setIndex: integer('set_index').notNull(),
+  habitId: integer('habit_id').references(() => habits.id, { onDelete: 'set null' }),
+  habitNameSnapshot: text('habit_name_snapshot').notNull(),
+  notesSnapshot: text('notes_snapshot'),
+  plannedDurationSeconds: integer('planned_duration_seconds').notNull(),
+  plannedBreakSeconds: integer('planned_break_seconds').notNull(),
+  actualDurationSeconds: integer('actual_duration_seconds'),
+  startedAt: integer('started_at', { mode: 'timestamp' }),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+}, (table) => [
+  uniqueIndex('routine_session_sets_position').on(table.sessionId, table.blockIndex, table.setIndex),
+]);
+
+export const activeTimers = sqliteTable('active_timers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  habitId: integer('habit_id').notNull().references(() => habits.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  startTime: integer('start_time', { mode: 'timestamp' }).notNull(),
+  targetDurationSeconds: integer('target_duration_seconds'),
+  routineSessionSetId: integer('routine_session_set_id').references(() => routineSessionSets.id, { onDelete: 'cascade' }),
+  phase: text('phase'),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   habits: many(habits),
   activeTimers: many(activeTimers),
   routines: many(routines),
+  routineSessions: many(routineSessions),
 }));
 
 export const habitsRelations = relations(habits, ({ one, many }) => ({
@@ -85,4 +119,15 @@ export const routinesRelations = relations(routines, ({ one, many }) => ({
 export const routineBlocksRelations = relations(routineBlocks, ({ one }) => ({
   routine: one(routines, { fields: [routineBlocks.routineId], references: [routines.id] }),
   habit: one(habits, { fields: [routineBlocks.habitId], references: [habits.id] }),
+}));
+
+export const routineSessionsRelations = relations(routineSessions, ({ one, many }) => ({
+  user: one(users, { fields: [routineSessions.userId], references: [users.id] }),
+  routine: one(routines, { fields: [routineSessions.routineId], references: [routines.id] }),
+  sets: many(routineSessionSets),
+}));
+
+export const routineSessionSetsRelations = relations(routineSessionSets, ({ one }) => ({
+  session: one(routineSessions, { fields: [routineSessionSets.sessionId], references: [routineSessions.id] }),
+  habit: one(habits, { fields: [routineSessionSets.habitId], references: [habits.id] }),
 }));

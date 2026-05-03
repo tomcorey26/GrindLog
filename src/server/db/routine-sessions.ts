@@ -307,8 +307,58 @@ export async function completeSetForUser(
     return await reloadActiveSession(tx, userId);
   });
 }
-export async function patchSetForUser(_userId: number, _setRowId: number, _patch: { plannedDurationSeconds?: number; plannedBreakSeconds?: number; actualDurationSeconds?: number }) {
-  throw new Error('not implemented');
+export async function patchSetForUser(
+  userId: number,
+  setRowId: number,
+  patch: {
+    plannedDurationSeconds?: number;
+    plannedBreakSeconds?: number;
+    actualDurationSeconds?: number;
+  },
+): Promise<ActiveRoutineSession | { conflict: 'set_locked' } | null> {
+  return db.transaction(async (tx) => {
+    const row = await tx
+      .select()
+      .from(routineSessionSets)
+      .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+      .where(
+        and(
+          eq(routineSessionSets.id, setRowId),
+          eq(routineSessions.userId, userId),
+          eq(routineSessions.status, 'active'),
+        ),
+      )
+      .get();
+    if (!row) return null;
+    const setRow = row.routine_session_sets;
+
+    const isUpcoming = !setRow.startedAt;
+    const isCompleted = !!setRow.completedAt;
+    const isRunning = !!setRow.startedAt && !setRow.completedAt;
+
+    const update: Partial<typeof routineSessionSets.$inferInsert> = {};
+    if (patch.plannedDurationSeconds !== undefined) {
+      if (!isUpcoming) return { conflict: 'set_locked' as const };
+      update.plannedDurationSeconds = patch.plannedDurationSeconds;
+    }
+    if (patch.plannedBreakSeconds !== undefined) {
+      if (!isUpcoming) return { conflict: 'set_locked' as const };
+      update.plannedBreakSeconds = patch.plannedBreakSeconds;
+    }
+    if (patch.actualDurationSeconds !== undefined) {
+      if (!isCompleted || isRunning) return { conflict: 'set_locked' as const };
+      update.actualDurationSeconds = patch.actualDurationSeconds;
+    }
+
+    if (Object.keys(update).length === 0) return await reloadActiveSession(tx, userId);
+
+    await tx
+      .update(routineSessionSets)
+      .set(update)
+      .where(eq(routineSessionSets.id, setRow.id));
+
+    return await reloadActiveSession(tx, userId);
+  });
 }
 export async function skipBreakForUser(userId: number): Promise<ActiveRoutineSession | null> {
   return db.transaction(async (tx) => {

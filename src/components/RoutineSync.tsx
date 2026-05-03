@@ -63,9 +63,10 @@ export function RoutineSync() {
       useRoutineSessionStore.getState().setDisplayTime('00:00:00');
       return;
     }
+    const { startTime, targetDurationSeconds } = activeTimer;
     function tick() {
       useRoutineSessionStore.getState().setDisplayTime(
-        formatRemaining(activeTimer.startTime, activeTimer.targetDurationSeconds),
+        formatRemaining(startTime, targetDurationSeconds),
       );
     }
     tick();

@@ -40,7 +40,7 @@ export function HistoryView({
 
   // Filter pending-deleted items: keep groups whose entries aren't all pending,
   // and keep flat sessions whose id isn't pending.
-  const visibleItems: HistoryListItem[] = items.flatMap((item) => {
+  const visibleItems: HistoryListItem[] = items.flatMap((item): HistoryListItem[] => {
     if (item.kind === 'session') {
       return pendingIds.has(item.entry.id) ? [] : [item];
     }

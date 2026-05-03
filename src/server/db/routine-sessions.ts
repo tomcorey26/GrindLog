@@ -92,8 +92,10 @@ export async function startRoutineSessionForUser(
   });
 }
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 async function reloadActiveSession(
-  tx: typeof db,
+  tx: Tx,
   userId: number,
 ): Promise<ActiveRoutineSession | null> {
   // Same body as getActiveRoutineSessionForUser but using `tx`. Inline-duplicated

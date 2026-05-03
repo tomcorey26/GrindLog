@@ -38,15 +38,19 @@ export function ActiveRoutineView() {
 
   if (summary) {
     return (
-      <RoutineSessionSummary
-        summary={summary}
-        onDiscard={() => setDiscardOpen(true)}
-        onSaved={() => {
-          setSummary(null);
-          reset();
-          router.push('/routines');
-        }}
-      />
+      <>
+        <RoutineSessionSummary
+          summary={summary}
+          onDiscard={() => setDiscardOpen(true)}
+          onBack={() => setSummary(null)}
+          onSaved={() => {
+            setSummary(null);
+            reset();
+            router.push('/routines');
+          }}
+        />
+        <DiscardRoutineDialog open={discardOpen} onOpenChange={setDiscardOpen} onConfirm={handleDiscard} />
+      </>
     );
   }
 

@@ -65,9 +65,11 @@ function RoutineCard({ routine, isActive = false }: RoutineCardProps) {
     }
   }
 
+  const cardHref = isActive ? `/routines/${routine.id}/active` : `/routines/${routine.id}`;
+
   return (
     <>
-      <Link href={`/routines/${routine.id}`} className="block h-full">
+      <Link href={cardHref} className="block h-full">
         <Card className="p-5 h-full flex flex-col hover:shadow-md active:scale-[0.98] transition-all cursor-pointer relative group">
           {/* Action icons */}
           <div className="absolute top-3 right-3 flex items-center gap-1">

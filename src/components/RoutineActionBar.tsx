@@ -6,7 +6,7 @@ import { Trophy, Play } from 'lucide-react';
 import { useRoutineSessionStore } from '@/stores/routine-session-store';
 import { useFinishRoutineSession, useStartSet } from '@/hooks/use-active-routine';
 import { useHaptics } from '@/hooks/use-haptics';
-import { Button } from '@/components/ui/button';
+import { PressableButton } from '@/components/ui/pressable-button';
 import { ApiError } from '@/lib/api';
 
 export function RoutineActionBar() {
@@ -79,14 +79,14 @@ export function RoutineActionBar() {
             </span>
           </div>
         </div>
-        <Button
+        <PressableButton
           size="sm"
           onClick={handleFinish}
           disabled={finish.isPending}
           className="bg-emerald-600 hover:bg-emerald-700 text-white"
         >
           {finish.isPending ? 'Finishing...' : 'Finish'}
-        </Button>
+        </PressableButton>
       </div>
     );
   }
@@ -130,14 +130,14 @@ export function RoutineActionBar() {
         <span className="text-xs text-muted-foreground">{phaseLabel}</span>
       </div>
       {isIdle ? (
-        <Button
+        <PressableButton
           size="icon-sm"
           onClick={handleStartSet}
           disabled={startSet.isPending}
           aria-label={`Start set ${currentSetIndex + 1}`}
         >
           <Play className="h-3.5 w-3.5" />
-        </Button>
+        </PressableButton>
       ) : (
         <span className="font-mono text-sm">{displayTime}</span>
       )}

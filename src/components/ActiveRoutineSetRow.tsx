@@ -2,6 +2,7 @@
 
 import { Play, Square, Check, SkipForward, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PressableButton } from '@/components/ui/pressable-button';
 import { Stepper } from '@/components/ui/stepper';
 import type { RoutineSessionSet } from '@/lib/types';
 
@@ -104,9 +105,9 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
 
       <div className="flex items-center justify-end">
         {state === 'upcoming-idle' && (
-          <Button size="icon-sm" variant="default" onClick={onStart} aria-label="Start set">
+          <PressableButton size="icon-sm" variant="default" onClick={onStart} aria-label="Start set">
             <Play className="h-3.5 w-3.5" />
-          </Button>
+          </PressableButton>
         )}
         {state === 'upcoming-disabled' && (
           <Button size="icon-sm" variant="default" disabled aria-label="Start set">
@@ -114,12 +115,12 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
           </Button>
         )}
         {state === 'running' && (
-          <Button size="icon-sm" variant="destructive" onClick={onEnd} aria-label="End set">
+          <PressableButton size="icon-sm" variant="destructive" onClick={onEnd} aria-label="End set">
             <Square className="h-3.5 w-3.5" />
-          </Button>
+          </PressableButton>
         )}
         {state === 'break-running' && (
-          <Button
+          <PressableButton
             size="icon-sm"
             variant="ghost"
             onClick={onSkipBreak}
@@ -127,7 +128,7 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
             className="text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
           >
             <SkipForward className="h-3.5 w-3.5" />
-          </Button>
+          </PressableButton>
         )}
         {state === 'completed' && (
           <span aria-label="Set completed" className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500 text-white">

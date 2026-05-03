@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
+import { playSetCompleteChime, playBreakCompleteChime } from '@/lib/sounds';
 import type { ActiveRoutineSession, RoutineSessionSummary } from '@/lib/types';
 
 type ActiveResp = { session: ActiveRoutineSession | null };
@@ -76,7 +77,10 @@ export function useCompleteSet() {
         method: 'POST',
         body: JSON.stringify({ endedEarlyAt: vars.endedEarlyAt }),
       }),
-    onSuccess: () => invalidate(qc),
+    onSuccess: () => {
+      playSetCompleteChime();
+      invalidate(qc);
+    },
   });
 }
 
@@ -100,7 +104,10 @@ export function useSkipBreak() {
   return useMutation({
     mutationFn: () =>
       api<SessionResp>('/api/routines/active/break/skip', { method: 'POST' }),
-    onSuccess: () => invalidate(qc),
+    onSuccess: () => {
+      playBreakCompleteChime();
+      invalidate(qc);
+    },
   });
 }
 
@@ -109,6 +116,9 @@ export function useCompleteBreak() {
   return useMutation({
     mutationFn: () =>
       api<SessionResp>('/api/routines/active/break/complete', { method: 'POST' }),
-    onSuccess: () => invalidate(qc),
+    onSuccess: () => {
+      playBreakCompleteChime();
+      invalidate(qc);
+    },
   });
 }

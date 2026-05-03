@@ -2,7 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 
-type PressableButtonProps = React.ComponentProps<typeof Button>;
+type PressableButtonProps = React.ComponentProps<typeof Button> & {
+  /** Skip the 3D press shadow + translate. Click sound stays. */
+  flat?: boolean;
+};
 
 let audioCtx: AudioContext | null = null;
 let clickBuffer: AudioBuffer | null = null;
@@ -55,9 +58,10 @@ export function PressableButton({
   onClick,
   onPointerEnter,
   variant = 'default',
+  flat = false,
   ...props
 }: PressableButtonProps) {
-  const pressClasses = SHADOW_BY_VARIANT[variant ?? 'default'] ?? '';
+  const pressClasses = flat ? '' : (SHADOW_BY_VARIANT[variant ?? 'default'] ?? '');
 
   return (
     <Button

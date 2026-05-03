@@ -4,9 +4,7 @@ import {
   routineSessions,
   routineSessionSets,
   activeTimers,
-  habits,
   timeSessions,
-  routines,
 } from '@/db/schema';
 import type {
   ActiveRoutineSession,

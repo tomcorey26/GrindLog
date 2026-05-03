@@ -128,5 +128,5 @@ function groupSetsByBlock(sets: RoutineSessionSet[]) {
   }
   return Array.from(map.entries())
     .sort(([a], [b]) => a - b)
-    .map(([_, set]) => ({ sets: set.sort((x, y) => x.setIndex - y.setIndex) }));
+    .map(([, set]) => ({ sets: set.sort((x, y) => x.setIndex - y.setIndex) }));
 }

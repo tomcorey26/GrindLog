@@ -1,4 +1,4 @@
-import type { RoutineSessionSet } from './types';
+import type { RoutineSessionActiveTimer, RoutineSessionSet } from './types';
 
 export type NextPhaseInput = {
   sets: RoutineSessionSet[];
@@ -26,4 +26,20 @@ export function computeNextPhase({ sets, completedSetId }: NextPhaseInput): Next
     breakSeconds: completed.plannedBreakSeconds,
     setRowId: completed.id,
   };
+}
+
+export type ReplayAction =
+  | { action: 'stable' }
+  | { action: 'complete-set'; setRowId: number }
+  | { action: 'complete-break' };
+
+export function computeReplayForward(
+  timer: RoutineSessionActiveTimer | null,
+  now: Date,
+): ReplayAction {
+  if (!timer) return { action: 'stable' };
+  const elapsed = (now.getTime() - new Date(timer.startTime).getTime()) / 1000;
+  if (elapsed < timer.targetDurationSeconds) return { action: 'stable' };
+  if (timer.phase === 'set') return { action: 'complete-set', setRowId: timer.routineSessionSetId };
+  return { action: 'complete-break' };
 }

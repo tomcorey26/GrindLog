@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeNextPhase } from './routine-session';
-import type { RoutineSessionSet } from './types';
+import { computeNextPhase, computeReplayForward } from './routine-session';
+import type { RoutineSessionSet, RoutineSessionActiveTimer } from './types';
 
 function makeSet(partial: Partial<RoutineSessionSet> & { blockIndex: number; setIndex: number }): RoutineSessionSet {
   return {
@@ -53,5 +53,44 @@ describe('computeNextPhase', () => {
     ];
     const result = computeNextPhase({ sets, completedSetId: sets[0].id });
     expect(result).toEqual({ phase: 'break', breakSeconds: 30, setRowId: sets[0].id });
+  });
+});
+
+function makeTimer(p: Partial<RoutineSessionActiveTimer> = {}): RoutineSessionActiveTimer {
+  return {
+    routineSessionSetId: 1,
+    phase: 'set',
+    startTime: '2026-05-02T00:00:00.000Z',
+    targetDurationSeconds: 60,
+    ...p,
+  };
+}
+
+describe('computeReplayForward', () => {
+  it('returns stable when no timer', () => {
+    expect(computeReplayForward(null, new Date())).toEqual({ action: 'stable' });
+  });
+
+  it('returns stable when timer has not elapsed', () => {
+    const start = new Date('2026-05-02T00:00:00.000Z');
+    const now = new Date(start.getTime() + 30_000);
+    expect(computeReplayForward(makeTimer({ targetDurationSeconds: 60 }), now)).toEqual({ action: 'stable' });
+  });
+
+  it('returns complete-set when set timer elapsed', () => {
+    const start = new Date('2026-05-02T00:00:00.000Z');
+    const now = new Date(start.getTime() + 120_000);
+    expect(computeReplayForward(makeTimer({ phase: 'set', targetDurationSeconds: 60 }), now)).toEqual({
+      action: 'complete-set',
+      setRowId: 1,
+    });
+  });
+
+  it('returns complete-break when break timer elapsed', () => {
+    const start = new Date('2026-05-02T00:00:00.000Z');
+    const now = new Date(start.getTime() + 120_000);
+    expect(computeReplayForward(makeTimer({ phase: 'break', targetDurationSeconds: 60 }), now)).toEqual({
+      action: 'complete-break',
+    });
   });
 });

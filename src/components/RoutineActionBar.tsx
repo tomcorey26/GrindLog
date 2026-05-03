@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Trophy, Play, SkipForward } from 'lucide-react';
+import { Trophy, Play, SkipForward, Square } from 'lucide-react';
 import { useRoutineSessionStore } from '@/stores/routine-session-store';
-import { useFinishRoutineSession, useStartSet, useSkipBreak } from '@/hooks/use-active-routine';
+import { useFinishRoutineSession, useStartSet, useSkipBreak, useCompleteSet } from '@/hooks/use-active-routine';
 import { useHaptics } from '@/hooks/use-haptics';
 import { PressableButton } from '@/components/ui/pressable-button';
 import { ApiError } from '@/lib/api';
@@ -19,6 +19,7 @@ export function RoutineActionBar() {
   const finish = useFinishRoutineSession();
   const startSet = useStartSet();
   const skipBreak = useSkipBreak();
+  const completeSet = useCompleteSet();
 
   if (mode !== 'active' || !session) return null;
 
@@ -103,6 +104,7 @@ export function RoutineActionBar() {
   const currentSet = session.sets[currentSetIndex];
   const isIdle = !activeTimer;
   const isBreakRunning = activeTimer?.phase === 'break';
+  const isSetRunning = activeTimer?.phase === 'set';
 
   function handleStartSet(e: React.MouseEvent) {
     e.stopPropagation();
@@ -115,6 +117,13 @@ export function RoutineActionBar() {
     e.stopPropagation();
     trigger('light');
     skipBreak.mutate();
+  }
+
+  function handleEndSet(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!activeTimer) return;
+    trigger('buzz');
+    completeSet.mutate({ setRowId: activeTimer.routineSessionSetId });
   }
 
   let phaseLabel: string;
@@ -154,9 +163,22 @@ export function RoutineActionBar() {
             onClick={handleSkipBreak}
             disabled={skipBreak.isPending}
             aria-label="Skip break"
-            className="bg-sky-500 hover:bg-sky-600 text-white"
+            className="bg-sky-500 hover:bg-sky-600 text-white shadow-[0_5px_0_0_color-mix(in_srgb,#0ea5e9_70%,black)] active:shadow-none active:translate-y-1.25"
           >
             <SkipForward className="h-3.5 w-3.5" />
+          </PressableButton>
+        </div>
+      ) : isSetRunning ? (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm text-primary font-semibold">{displayTime}</span>
+          <PressableButton
+            size="icon-sm"
+            variant="destructive"
+            onClick={handleEndSet}
+            disabled={completeSet.isPending}
+            aria-label="End set"
+          >
+            <Square className="h-3.5 w-3.5" />
           </PressableButton>
         </div>
       ) : (

@@ -16,6 +16,7 @@ import { RoutineSessionSummary } from '@/components/RoutineSessionSummary';
 import { Spinner } from '@/components/Spinner';
 import { useHaptics } from '@/hooks/use-haptics';
 import { ApiError } from '@/lib/api';
+import { computeSetRowState } from '@/lib/routine-session';
 import type { RoutineSessionSet } from '@/lib/types';
 
 export function ActiveRoutineView() {
@@ -61,14 +62,7 @@ export function ActiveRoutineView() {
   const activeTimer = session.activeTimer;
 
   function rowState(set: RoutineSessionSet) {
-    // Active timer takes precedence — when a break is running, the underlying
-    // set is already completedAt, but we want the row to show break-running
-    // (with the Skip button) until the break finishes.
-    if (activeTimer?.routineSessionSetId === set.id) {
-      return activeTimer.phase === 'break' ? ('break-running' as const) : ('running' as const);
-    }
-    if (set.completedAt) return 'completed' as const;
-    return activeTimer ? ('upcoming-disabled' as const) : ('upcoming-idle' as const);
+    return computeSetRowState(set, activeTimer);
   }
 
   function activeTimerProgressPct(): number | undefined {

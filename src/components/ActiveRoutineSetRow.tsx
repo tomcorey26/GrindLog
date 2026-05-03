@@ -5,13 +5,9 @@ import { Button } from '@/components/ui/button';
 import { PressableButton } from '@/components/ui/pressable-button';
 import { Stepper } from '@/components/ui/stepper';
 import type { RoutineSessionSet } from '@/lib/types';
+import type { SetRowState } from '@/lib/routine-session';
 
-export type SetRowState =
-  | 'upcoming-idle'
-  | 'upcoming-disabled'
-  | 'running'
-  | 'break-running'
-  | 'completed';
+export type { SetRowState };
 
 type Props = {
   set: RoutineSessionSet;

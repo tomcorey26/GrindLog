@@ -70,6 +70,33 @@ describe('RoutineActionBar', () => {
     expect(screen.getByText(/Ready for set 2/i)).toBeInTheDocument();
   });
 
+  it('shows an End-set button when a set is running', () => {
+    useRoutineSessionStore.getState().hydrate({
+      id: 1, routineId: 1, routineNameSnapshot: 'M', status: 'active',
+      startedAt: '', finishedAt: null,
+      sets: [
+        { id: 1, sessionId: 1, blockIndex: 0, setIndex: 0, habitId: 1, habitNameSnapshot: 'Guitar', notesSnapshot: null, plannedDurationSeconds: 60, plannedBreakSeconds: 0, actualDurationSeconds: null, startedAt: '2026-05-02T00:00:00Z', completedAt: null },
+      ],
+      activeTimer: { routineSessionSetId: 1, phase: 'set', startTime: '2026-05-02T00:00:00Z', targetDurationSeconds: 60 },
+    });
+    render(<RoutineActionBar />);
+    expect(screen.getByRole('button', { name: /end set/i })).toBeInTheDocument();
+  });
+
+  it('shows a Skip button when a break is running', () => {
+    useRoutineSessionStore.getState().hydrate({
+      id: 1, routineId: 1, routineNameSnapshot: 'M', status: 'active',
+      startedAt: '', finishedAt: null,
+      sets: [
+        { id: 1, sessionId: 1, blockIndex: 0, setIndex: 0, habitId: 1, habitNameSnapshot: 'Guitar', notesSnapshot: null, plannedDurationSeconds: 60, plannedBreakSeconds: 30, actualDurationSeconds: 60, startedAt: '2026-05-02T00:00:00Z', completedAt: '2026-05-02T00:01:00Z' },
+        { id: 2, sessionId: 1, blockIndex: 0, setIndex: 1, habitId: 1, habitNameSnapshot: 'Guitar', notesSnapshot: null, plannedDurationSeconds: 60, plannedBreakSeconds: 0, actualDurationSeconds: null, startedAt: null, completedAt: null },
+      ],
+      activeTimer: { routineSessionSetId: 1, phase: 'break', startTime: '2026-05-02T00:01:00Z', targetDurationSeconds: 30 },
+    });
+    render(<RoutineActionBar />);
+    expect(screen.getByRole('button', { name: /skip break/i })).toBeInTheDocument();
+  });
+
   it('shows "Routine complete" + Finish button when every set is completed', () => {
     useRoutineSessionStore.getState().hydrate({
       id: 1, routineId: 1, routineNameSnapshot: 'M', status: 'active',

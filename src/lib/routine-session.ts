@@ -91,6 +91,31 @@ export type SnapshotInsert = {
   plannedBreakSeconds: number;
 };
 
+export type SetRowState =
+  | 'upcoming-idle'
+  | 'upcoming-disabled'
+  | 'running'
+  | 'break-running'
+  | 'completed';
+
+/**
+ * Decide what state a single set's row should render in given the active timer.
+ *
+ * The active timer takes precedence over completedAt — when a break is running,
+ * the underlying set is already completedAt, but the row should show
+ * 'break-running' (with the Skip button) until the break finishes.
+ */
+export function computeSetRowState(
+  set: RoutineSessionSet,
+  activeTimer: RoutineSessionActiveTimer | null,
+): SetRowState {
+  if (activeTimer?.routineSessionSetId === set.id) {
+    return activeTimer.phase === 'break' ? 'break-running' : 'running';
+  }
+  if (set.completedAt) return 'completed';
+  return activeTimer ? 'upcoming-disabled' : 'upcoming-idle';
+}
+
 export function snapshotRoutineToSets(routine: Routine): SnapshotInsert[] {
   const sortedBlocks = [...routine.blocks].sort((a, b) => a.sortOrder - b.sortOrder);
   return sortedBlocks.flatMap((block, blockIndex) =>

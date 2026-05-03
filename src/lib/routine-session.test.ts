@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeNextPhase, computeReplayForward, computeSummary, snapshotRoutineToSets } from './routine-session';
+import { computeNextPhase, computeReplayForward, computeSummary, snapshotRoutineToSets, computeSetRowState } from './routine-session';
 import type { RoutineSessionSet, RoutineSessionActiveTimer, Routine } from './types';
 
 function makeSet(partial: Partial<RoutineSessionSet> & { blockIndex: number; setIndex: number }): RoutineSessionSet {
@@ -155,5 +155,45 @@ describe('snapshotRoutineToSets', () => {
       { blockIndex: 0, setIndex: 1, habitId: 100, habitNameSnapshot: 'Guitar', notesSnapshot: 'warm up', plannedDurationSeconds: 90, plannedBreakSeconds: 0 },
       { blockIndex: 1, setIndex: 0, habitId: 200, habitNameSnapshot: 'Piano', notesSnapshot: null, plannedDurationSeconds: 120, plannedBreakSeconds: 60 },
     ]);
+  });
+});
+
+describe('computeSetRowState', () => {
+  const baseSet = makeSet({ blockIndex: 0, setIndex: 0 });
+
+  function timer(p: Partial<RoutineSessionActiveTimer> = {}): RoutineSessionActiveTimer {
+    return {
+      routineSessionSetId: baseSet.id,
+      phase: 'set',
+      startTime: '2026-05-02T00:00:00Z',
+      targetDurationSeconds: 60,
+      ...p,
+    };
+  }
+
+  it('returns upcoming-idle with no active timer and the set not started', () => {
+    expect(computeSetRowState(baseSet, null)).toBe('upcoming-idle');
+  });
+
+  it('returns upcoming-disabled when another set has an active timer', () => {
+    expect(computeSetRowState(baseSet, timer({ routineSessionSetId: 999 }))).toBe('upcoming-disabled');
+  });
+
+  it('returns running when this set has an active set-phase timer', () => {
+    expect(computeSetRowState(baseSet, timer({ phase: 'set' }))).toBe('running');
+  });
+
+  it('returns completed when set has completedAt and no active timer', () => {
+    const completed = { ...baseSet, completedAt: '2026-05-02T00:01:00Z' };
+    expect(computeSetRowState(completed, null)).toBe('completed');
+  });
+
+  it('returns break-running for the just-completed set when its break timer is active (precedence over completed)', () => {
+    // Regression: a completed set with an active break timer was previously
+    // shadowed by the 'completed' branch, hiding the Skip button entirely.
+    const completed = { ...baseSet, completedAt: '2026-05-02T00:01:00Z' };
+    expect(
+      computeSetRowState(completed, timer({ phase: 'break', routineSessionSetId: completed.id })),
+    ).toBe('break-running');
   });
 });

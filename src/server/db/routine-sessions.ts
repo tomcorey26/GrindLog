@@ -51,8 +51,41 @@ function rowToTimer(
 export async function startRoutineSessionForUser(_userId: number, _routineId: number) {
   throw new Error('not implemented');
 }
-export async function getActiveRoutineSessionForUser(_userId: number): Promise<ActiveRoutineSession | null> {
-  throw new Error('not implemented');
+export async function getActiveRoutineSessionForUser(
+  userId: number,
+): Promise<ActiveRoutineSession | null> {
+  const session = await db
+    .select()
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  if (!session) return null;
+
+  const setRows = await db
+    .select()
+    .from(routineSessionSets)
+    .where(eq(routineSessionSets.sessionId, session.id));
+
+  const sortedSets = setRows
+    .map(rowToSet)
+    .sort((a, b) => a.blockIndex - b.blockIndex || a.setIndex - b.setIndex);
+
+  const timerRow = await db
+    .select()
+    .from(activeTimers)
+    .where(eq(activeTimers.userId, userId))
+    .get();
+
+  return {
+    id: session.id,
+    routineId: session.routineId,
+    routineNameSnapshot: session.routineNameSnapshot,
+    status: session.status as 'active' | 'completed',
+    startedAt: session.startedAt.toISOString(),
+    finishedAt: session.finishedAt?.toISOString() ?? null,
+    sets: sortedSets,
+    activeTimer: rowToTimer(timerRow),
+  };
 }
 export async function discardActiveRoutineSessionForUser(_userId: number) {
   throw new Error('not implemented');

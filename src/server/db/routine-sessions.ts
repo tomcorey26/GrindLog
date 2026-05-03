@@ -48,8 +48,86 @@ function rowToTimer(
 }
 
 // Stubs — implemented in subsequent tasks:
-export async function startRoutineSessionForUser(_userId: number, _routineId: number) {
-  throw new Error('not implemented');
+export async function startRoutineSessionForUser(
+  userId: number,
+  routineId: number,
+): Promise<ActiveRoutineSession | { conflict: 'active_timer_exists' } | null> {
+  const routine = await getRoutineById(routineId, userId);
+  if (!routine) return null;
+
+  return db.transaction(async (tx) => {
+    const existingTimer = await tx
+      .select({ id: activeTimers.id })
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+    if (existingTimer) return { conflict: 'active_timer_exists' as const };
+
+    const existingSession = await tx
+      .select({ id: routineSessions.id })
+      .from(routineSessions)
+      .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+      .get();
+    if (existingSession) return { conflict: 'active_timer_exists' as const };
+
+    const now = new Date();
+    const [session] = await tx
+      .insert(routineSessions)
+      .values({
+        userId,
+        routineId: routine.id,
+        routineNameSnapshot: routine.name,
+        status: 'active',
+        startedAt: now,
+      })
+      .returning();
+
+    const inserts = snapshotRoutineToSets(routine).map((s) => ({
+      sessionId: session.id,
+      ...s,
+    }));
+    if (inserts.length > 0) {
+      await tx.insert(routineSessionSets).values(inserts);
+    }
+
+    return await reloadActiveSession(tx, userId);
+  });
+}
+
+async function reloadActiveSession(
+  tx: typeof db,
+  userId: number,
+): Promise<ActiveRoutineSession | null> {
+  // Same body as getActiveRoutineSessionForUser but using `tx`. Inline-duplicated
+  // to avoid a public signature change on the existing helper.
+  const session = await tx
+    .select()
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  if (!session) return null;
+  const setRows = await tx
+    .select()
+    .from(routineSessionSets)
+    .where(eq(routineSessionSets.sessionId, session.id));
+  const sortedSets = setRows
+    .map(rowToSet)
+    .sort((a, b) => a.blockIndex - b.blockIndex || a.setIndex - b.setIndex);
+  const timerRow = await tx
+    .select()
+    .from(activeTimers)
+    .where(eq(activeTimers.userId, userId))
+    .get();
+  return {
+    id: session.id,
+    routineId: session.routineId,
+    routineNameSnapshot: session.routineNameSnapshot,
+    status: session.status as 'active' | 'completed',
+    startedAt: session.startedAt.toISOString(),
+    finishedAt: session.finishedAt?.toISOString() ?? null,
+    sets: sortedSets,
+    activeTimer: rowToTimer(timerRow),
+  };
 }
 export async function getActiveRoutineSessionForUser(
   userId: number,

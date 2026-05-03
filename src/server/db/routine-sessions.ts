@@ -1,0 +1,469 @@
+import { and, eq } from 'drizzle-orm';
+import { db } from '@/db';
+import {
+  routineSessions,
+  routineSessionSets,
+  activeTimers,
+  timeSessions,
+} from '@/db/schema';
+import type {
+  ActiveRoutineSession,
+  RoutineSessionSet,
+  RoutineSessionActiveTimer,
+} from '@/lib/types';
+import { snapshotRoutineToSets, computeNextPhase, computeSummary } from '@/lib/routine-session';
+import { getRoutineById } from '@/server/db/routines';
+
+function rowToSet(row: typeof routineSessionSets.$inferSelect): RoutineSessionSet {
+  return {
+    id: row.id,
+    sessionId: row.sessionId,
+    blockIndex: row.blockIndex,
+    setIndex: row.setIndex,
+    habitId: row.habitId,
+    habitNameSnapshot: row.habitNameSnapshot,
+    notesSnapshot: row.notesSnapshot,
+    plannedDurationSeconds: row.plannedDurationSeconds,
+    plannedBreakSeconds: row.plannedBreakSeconds,
+    actualDurationSeconds: row.actualDurationSeconds,
+    startedAt: row.startedAt?.toISOString() ?? null,
+    completedAt: row.completedAt?.toISOString() ?? null,
+  };
+}
+
+function rowToTimer(
+  row: typeof activeTimers.$inferSelect | undefined,
+): RoutineSessionActiveTimer | null {
+  if (!row || !row.routineSessionSetId || !row.phase || row.targetDurationSeconds === null) {
+    return null;
+  }
+  return {
+    routineSessionSetId: row.routineSessionSetId,
+    phase: row.phase as 'set' | 'break',
+    startTime: row.startTime.toISOString(),
+    targetDurationSeconds: row.targetDurationSeconds,
+  };
+}
+
+// Stubs — implemented in subsequent tasks:
+export async function startRoutineSessionForUser(
+  userId: number,
+  routineId: number,
+): Promise<ActiveRoutineSession | { conflict: 'active_timer_exists' } | null> {
+  const routine = await getRoutineById(routineId, userId);
+  if (!routine) return null;
+
+  return db.transaction(async (tx) => {
+    const existingTimer = await tx
+      .select({ id: activeTimers.id })
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+    if (existingTimer) return { conflict: 'active_timer_exists' as const };
+
+    const existingSession = await tx
+      .select({ id: routineSessions.id })
+      .from(routineSessions)
+      .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+      .get();
+    if (existingSession) return { conflict: 'active_timer_exists' as const };
+
+    const now = new Date();
+    const [session] = await tx
+      .insert(routineSessions)
+      .values({
+        userId,
+        routineId: routine.id,
+        routineNameSnapshot: routine.name,
+        status: 'active',
+        startedAt: now,
+      })
+      .returning();
+
+    const inserts = snapshotRoutineToSets(routine).map((s) => ({
+      sessionId: session.id,
+      ...s,
+    }));
+    if (inserts.length > 0) {
+      await tx.insert(routineSessionSets).values(inserts);
+    }
+
+    return await reloadActiveSession(tx, userId);
+  });
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function reloadActiveSession(
+  tx: Tx,
+  userId: number,
+): Promise<ActiveRoutineSession | null> {
+  // Same body as getActiveRoutineSessionForUser but using `tx`. Inline-duplicated
+  // to avoid a public signature change on the existing helper.
+  const session = await tx
+    .select()
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  if (!session) return null;
+  const setRows = await tx
+    .select()
+    .from(routineSessionSets)
+    .where(eq(routineSessionSets.sessionId, session.id));
+  const sortedSets = setRows
+    .map(rowToSet)
+    .sort((a, b) => a.blockIndex - b.blockIndex || a.setIndex - b.setIndex);
+  const timerRow = await tx
+    .select()
+    .from(activeTimers)
+    .where(eq(activeTimers.userId, userId))
+    .get();
+  return {
+    id: session.id,
+    routineId: session.routineId,
+    routineNameSnapshot: session.routineNameSnapshot,
+    status: session.status as 'active' | 'completed',
+    startedAt: session.startedAt.toISOString(),
+    finishedAt: session.finishedAt?.toISOString() ?? null,
+    sets: sortedSets,
+    activeTimer: rowToTimer(timerRow),
+  };
+}
+export async function getActiveRoutineSessionForUser(
+  userId: number,
+): Promise<ActiveRoutineSession | null> {
+  const session = await db
+    .select()
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  if (!session) return null;
+
+  const setRows = await db
+    .select()
+    .from(routineSessionSets)
+    .where(eq(routineSessionSets.sessionId, session.id));
+
+  const sortedSets = setRows
+    .map(rowToSet)
+    .sort((a, b) => a.blockIndex - b.blockIndex || a.setIndex - b.setIndex);
+
+  const timerRow = await db
+    .select()
+    .from(activeTimers)
+    .where(eq(activeTimers.userId, userId))
+    .get();
+
+  return {
+    id: session.id,
+    routineId: session.routineId,
+    routineNameSnapshot: session.routineNameSnapshot,
+    status: session.status as 'active' | 'completed',
+    startedAt: session.startedAt.toISOString(),
+    finishedAt: session.finishedAt?.toISOString() ?? null,
+    sets: sortedSets,
+    activeTimer: rowToTimer(timerRow),
+  };
+}
+export async function discardActiveRoutineSessionForUser(
+  userId: number,
+): Promise<{ discarded: boolean }> {
+  return db.transaction(async (tx) => {
+    const session = await tx
+      .select({ id: routineSessions.id })
+      .from(routineSessions)
+      .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+      .get();
+    if (!session) return { discarded: false };
+
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    await tx.delete(routineSessions).where(eq(routineSessions.id, session.id));
+    return { discarded: true };
+  });
+}
+export async function buildSummaryForUser(
+  userId: number,
+): Promise<
+  | { ok: true; summary: import('@/lib/types').RoutineSessionSummary }
+  | { ok: false; reason: 'no_active_session' | 'no_completed_sets' }
+> {
+  const session = await db
+    .select()
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  if (!session) return { ok: false, reason: 'no_active_session' };
+
+  const setRows = await db
+    .select()
+    .from(routineSessionSets)
+    .where(eq(routineSessionSets.sessionId, session.id));
+
+  const sets = setRows.map(rowToSet);
+  const completed = sets.filter((s) => (s.actualDurationSeconds ?? 0) > 0);
+  if (completed.length === 0) return { ok: false, reason: 'no_completed_sets' };
+
+  const summary = computeSummary({
+    routineNameSnapshot: session.routineNameSnapshot,
+    sets,
+    startedAt: session.startedAt.toISOString(),
+    finishedAt: new Date().toISOString(),
+  });
+  return { ok: true, summary };
+}
+
+export async function saveActiveRoutineSessionForUser(
+  userId: number,
+): Promise<
+  | { ok: true; sessionId: number }
+  | { ok: false; reason: 'no_active_session' | 'no_completed_sets' }
+> {
+  return db.transaction(async (tx) => {
+    const session = await tx
+      .select()
+      .from(routineSessions)
+      .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+      .get();
+    if (!session) return { ok: false, reason: 'no_active_session' as const };
+
+    const setRows = await tx
+      .select()
+      .from(routineSessionSets)
+      .where(eq(routineSessionSets.sessionId, session.id));
+    const completed = setRows.filter((r) => (r.actualDurationSeconds ?? 0) > 0 && r.habitId !== null);
+    if (completed.length === 0) return { ok: false, reason: 'no_completed_sets' as const };
+
+    const now = new Date();
+    for (const r of completed) {
+      const start = r.startedAt ?? new Date(now.getTime() - (r.actualDurationSeconds ?? 0) * 1000);
+      const end = new Date(start.getTime() + (r.actualDurationSeconds ?? 0) * 1000);
+      await tx.insert(timeSessions).values({
+        habitId: r.habitId!,
+        userId,
+        startTime: start,
+        endTime: end,
+        durationSeconds: r.actualDurationSeconds!,
+        timerMode: 'routine',
+        routineSessionId: session.id,
+      });
+    }
+
+    await tx
+      .update(routineSessions)
+      .set({ status: 'completed', finishedAt: now })
+      .where(eq(routineSessions.id, session.id));
+
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+
+    return { ok: true, sessionId: session.id };
+  });
+}
+export async function startSetForUser(
+  userId: number,
+  setRowId: number,
+): Promise<ActiveRoutineSession | { conflict: 'set_already_running' } | null> {
+  return db.transaction(async (tx) => {
+    const set = await tx
+      .select({
+        id: routineSessionSets.id,
+        sessionId: routineSessionSets.sessionId,
+        habitId: routineSessionSets.habitId,
+        plannedDurationSeconds: routineSessionSets.plannedDurationSeconds,
+        startedAt: routineSessionSets.startedAt,
+      })
+      .from(routineSessionSets)
+      .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+      .where(
+        and(
+          eq(routineSessionSets.id, setRowId),
+          eq(routineSessions.userId, userId),
+          eq(routineSessions.status, 'active'),
+        ),
+      )
+      .get();
+    if (!set) return null;
+    if (set.startedAt) return { conflict: 'set_already_running' as const };
+
+    const existingTimer = await tx
+      .select({ id: activeTimers.id })
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+    if (existingTimer) return { conflict: 'set_already_running' as const };
+
+    if (!set.habitId) return null; // habit deleted out from under us
+
+    const now = new Date();
+    await tx
+      .update(routineSessionSets)
+      .set({ startedAt: now })
+      .where(eq(routineSessionSets.id, set.id));
+
+    await tx.insert(activeTimers).values({
+      habitId: set.habitId,
+      userId,
+      startTime: now,
+      targetDurationSeconds: set.plannedDurationSeconds,
+      routineSessionSetId: set.id,
+      phase: 'set',
+    });
+
+    return await reloadActiveSession(tx, userId);
+  });
+}
+export async function completeSetForUser(
+  userId: number,
+  setRowId: number,
+  endedAt?: Date,
+): Promise<ActiveRoutineSession | null> {
+  return db.transaction(async (tx) => {
+    const timerRow = await tx
+      .select()
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+
+    const set = await tx
+      .select()
+      .from(routineSessionSets)
+      .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+      .where(
+        and(
+          eq(routineSessionSets.id, setRowId),
+          eq(routineSessions.userId, userId),
+          eq(routineSessions.status, 'active'),
+        ),
+      )
+      .get();
+    if (!set) return null;
+    const setRow = set.routine_session_sets;
+
+    const now = endedAt ?? new Date();
+
+    // Compute actual duration: prefer the timer for cleanest math; fall back to set.startedAt.
+    const startedAt = setRow.startedAt ?? timerRow?.startTime ?? now;
+    const elapsed = Math.max(0, Math.ceil((now.getTime() - startedAt.getTime()) / 1000));
+    const actualDurationSeconds = Math.min(elapsed, setRow.plannedDurationSeconds);
+
+    await tx
+      .update(routineSessionSets)
+      .set({ actualDurationSeconds, completedAt: now })
+      .where(eq(routineSessionSets.id, setRow.id));
+
+    if (timerRow && timerRow.routineSessionSetId === setRow.id) {
+      await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    }
+
+    // Decide next phase using pure helper
+    const allSetRows = await tx
+      .select()
+      .from(routineSessionSets)
+      .where(eq(routineSessionSets.sessionId, setRow.sessionId));
+    const next = computeNextPhase({
+      sets: allSetRows.map(rowToSet),
+      completedSetId: setRow.id,
+    });
+
+    if (next.phase === 'break' && setRow.habitId) {
+      await tx.insert(activeTimers).values({
+        habitId: setRow.habitId,
+        userId,
+        startTime: now,
+        targetDurationSeconds: next.breakSeconds,
+        routineSessionSetId: setRow.id,
+        phase: 'break',
+      });
+    }
+
+    return await reloadActiveSession(tx, userId);
+  });
+}
+export async function patchSetForUser(
+  userId: number,
+  setRowId: number,
+  patch: {
+    plannedDurationSeconds?: number;
+    plannedBreakSeconds?: number;
+    actualDurationSeconds?: number;
+  },
+): Promise<ActiveRoutineSession | { conflict: 'set_locked' } | null> {
+  return db.transaction(async (tx) => {
+    const row = await tx
+      .select()
+      .from(routineSessionSets)
+      .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+      .where(
+        and(
+          eq(routineSessionSets.id, setRowId),
+          eq(routineSessions.userId, userId),
+          eq(routineSessions.status, 'active'),
+        ),
+      )
+      .get();
+    if (!row) return null;
+    const setRow = row.routine_session_sets;
+
+    const isUpcoming = !setRow.startedAt;
+    const isCompleted = !!setRow.completedAt;
+    const isRunning = !!setRow.startedAt && !setRow.completedAt;
+
+    const update: Partial<typeof routineSessionSets.$inferInsert> = {};
+    if (patch.plannedDurationSeconds !== undefined) {
+      if (!isUpcoming) return { conflict: 'set_locked' as const };
+      update.plannedDurationSeconds = patch.plannedDurationSeconds;
+    }
+    if (patch.plannedBreakSeconds !== undefined) {
+      if (!isUpcoming) return { conflict: 'set_locked' as const };
+      update.plannedBreakSeconds = patch.plannedBreakSeconds;
+    }
+    if (patch.actualDurationSeconds !== undefined) {
+      if (!isCompleted || isRunning) return { conflict: 'set_locked' as const };
+      update.actualDurationSeconds = patch.actualDurationSeconds;
+    }
+
+    if (Object.keys(update).length === 0) return await reloadActiveSession(tx, userId);
+
+    await tx
+      .update(routineSessionSets)
+      .set(update)
+      .where(eq(routineSessionSets.id, setRow.id));
+
+    return await reloadActiveSession(tx, userId);
+  });
+}
+export async function skipBreakForUser(userId: number): Promise<ActiveRoutineSession | null> {
+  return db.transaction(async (tx) => {
+    const timer = await tx
+      .select()
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+    if (!timer || timer.phase !== 'break') return null;
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    return await reloadActiveSession(tx, userId);
+  });
+}
+export const completeBreakForUser = skipBreakForUser; // identical semantics
+export async function userHasActiveRoutineSession(userId: number): Promise<boolean> {
+  const row = await db
+    .select({ id: routineSessions.id })
+    .from(routineSessions)
+    .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+    .get();
+  return !!row;
+}
+export async function habitIsInActiveRoutineSession(userId: number, habitId: number): Promise<boolean> {
+  const row = await db
+    .select({ id: routineSessionSets.id })
+    .from(routineSessionSets)
+    .innerJoin(routineSessions, eq(routineSessions.id, routineSessionSets.sessionId))
+    .where(
+      and(
+        eq(routineSessions.userId, userId),
+        eq(routineSessions.status, 'active'),
+        eq(routineSessionSets.habitId, habitId),
+      ),
+    )
+    .get();
+  return !!row;
+}

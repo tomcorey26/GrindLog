@@ -21,6 +21,10 @@ vi.mock('@/hooks/use-active-routine', () => ({
     mutate: vi.fn(),
     isPending: false,
   }),
+  useSkipBreak: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 import { RoutineActionBar } from './RoutineActionBar';

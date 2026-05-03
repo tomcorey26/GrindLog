@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Trophy, Play } from 'lucide-react';
+import { Trophy, Play, SkipForward } from 'lucide-react';
 import { useRoutineSessionStore } from '@/stores/routine-session-store';
-import { useFinishRoutineSession, useStartSet } from '@/hooks/use-active-routine';
+import { useFinishRoutineSession, useStartSet, useSkipBreak } from '@/hooks/use-active-routine';
 import { useHaptics } from '@/hooks/use-haptics';
 import { PressableButton } from '@/components/ui/pressable-button';
 import { ApiError } from '@/lib/api';
@@ -18,6 +18,7 @@ export function RoutineActionBar() {
   const mode = useRoutineSessionStore((s) => s.mode);
   const finish = useFinishRoutineSession();
   const startSet = useStartSet();
+  const skipBreak = useSkipBreak();
 
   if (mode !== 'active' || !session) return null;
 
@@ -101,12 +102,19 @@ export function RoutineActionBar() {
   })();
   const currentSet = session.sets[currentSetIndex];
   const isIdle = !activeTimer;
+  const isBreakRunning = activeTimer?.phase === 'break';
 
   function handleStartSet(e: React.MouseEvent) {
     e.stopPropagation();
     if (!currentSet) return;
     trigger('medium');
     startSet.mutate(currentSet.id);
+  }
+
+  function handleSkipBreak(e: React.MouseEvent) {
+    e.stopPropagation();
+    trigger('light');
+    skipBreak.mutate();
   }
 
   let phaseLabel: string;
@@ -138,6 +146,19 @@ export function RoutineActionBar() {
         >
           <Play className="h-3.5 w-3.5" />
         </PressableButton>
+      ) : isBreakRunning ? (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm text-sky-700 dark:text-sky-300 font-semibold">{displayTime}</span>
+          <PressableButton
+            size="icon-sm"
+            onClick={handleSkipBreak}
+            disabled={skipBreak.isPending}
+            aria-label="Skip break"
+            className="bg-sky-500 hover:bg-sky-600 text-white"
+          >
+            <SkipForward className="h-3.5 w-3.5" />
+          </PressableButton>
+        </div>
       ) : (
         <span className="font-mono text-sm">{displayTime}</span>
       )}

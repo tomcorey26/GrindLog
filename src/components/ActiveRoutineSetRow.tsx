@@ -89,8 +89,12 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, progre
           <Timer className="h-4 w-4" />
           <span>{displayTime}</span>
         </span>
+      ) : isBreak ? (
+        <span className="text-sm font-mono text-muted-foreground line-through">
+          {fmtMinSec(set.actualDurationSeconds ?? 0)}
+        </span>
       ) : (
-        <span className={`text-sm font-mono ${isBreak ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+        <span className="text-sm font-mono text-foreground">
           {fmtMins(set.plannedDurationSeconds)}
         </span>
       )}

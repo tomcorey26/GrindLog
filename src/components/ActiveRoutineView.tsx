@@ -101,8 +101,23 @@ export function ActiveRoutineView() {
   return (
     <div className="flex flex-col flex-1">
       <div className="sticky -top-0.5 md:-top-6 z-10 bg-background/95 backdrop-blur-sm border-b border-border -mx-4 md:-mx-6 px-4 md:px-6 py-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{session.routineNameSnapshot}</h2>
-        <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          {(() => {
+            const phase = activeTimer?.phase;
+            const statusLabel = phase === 'break' ? 'Resting' : 'Active';
+            const dotClass = phase === 'break' ? 'bg-sky-500' : 'bg-primary';
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full animate-pulse ${dotClass}`} />
+                <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                  {statusLabel}
+                </span>
+              </div>
+            );
+          })()}
+          <h2 className="text-lg font-semibold mt-0.5 truncate">{session.routineNameSnapshot}</h2>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="ghost" size="sm" onClick={() => setDiscardOpen(true)}>Discard</Button>
           <Button size="sm" onClick={handleFinish}>Finish</Button>
         </div>

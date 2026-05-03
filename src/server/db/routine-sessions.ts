@@ -165,8 +165,21 @@ export async function getActiveRoutineSessionForUser(
     activeTimer: rowToTimer(timerRow),
   };
 }
-export async function discardActiveRoutineSessionForUser(_userId: number) {
-  throw new Error('not implemented');
+export async function discardActiveRoutineSessionForUser(
+  userId: number,
+): Promise<{ discarded: boolean }> {
+  return db.transaction(async (tx) => {
+    const session = await tx
+      .select({ id: routineSessions.id })
+      .from(routineSessions)
+      .where(and(eq(routineSessions.userId, userId), eq(routineSessions.status, 'active')))
+      .get();
+    if (!session) return { discarded: false };
+
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    await tx.delete(routineSessions).where(eq(routineSessions.id, session.id));
+    return { discarded: true };
+  });
 }
 export async function buildSummaryForUser(_userId: number) {
   throw new Error('not implemented');

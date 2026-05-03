@@ -36,4 +36,11 @@ describe('ActiveRoutineSetRow', () => {
     render(<ActiveRoutineSetRow set={completed} setNumber={1} state="completed" onStart={() => {}} onEnd={() => {}} onSkipBreak={() => {}} onPatch={() => {}} displayTime="" />);
     expect(screen.getByLabelText(/completed/i)).toBeInTheDocument();
   });
+
+  it('calls onPatch when upcoming-idle duration stepper is incremented', async () => {
+    const onPatch = vi.fn();
+    render(<ActiveRoutineSetRow set={baseSet} setNumber={1} state="upcoming-idle" displayTime="" onStart={() => {}} onEnd={() => {}} onSkipBreak={() => {}} onPatch={onPatch} />);
+    await userEvent.click(screen.getByLabelText(/Increase Set 1 duration/i));
+    expect(onPatch).toHaveBeenCalledWith({ plannedDurationSeconds: 120 });
+  });
 });

@@ -310,12 +310,19 @@ export async function completeSetForUser(
 export async function patchSetForUser(_userId: number, _setRowId: number, _patch: { plannedDurationSeconds?: number; plannedBreakSeconds?: number; actualDurationSeconds?: number }) {
   throw new Error('not implemented');
 }
-export async function skipBreakForUser(_userId: number) {
-  throw new Error('not implemented');
+export async function skipBreakForUser(userId: number): Promise<ActiveRoutineSession | null> {
+  return db.transaction(async (tx) => {
+    const timer = await tx
+      .select()
+      .from(activeTimers)
+      .where(eq(activeTimers.userId, userId))
+      .get();
+    if (!timer || timer.phase !== 'break') return null;
+    await tx.delete(activeTimers).where(eq(activeTimers.userId, userId));
+    return await reloadActiveSession(tx, userId);
+  });
 }
-export async function completeBreakForUser(_userId: number) {
-  throw new Error('not implemented');
-}
+export const completeBreakForUser = skipBreakForUser; // identical semantics
 export async function userHasActiveRoutineSession(userId: number): Promise<boolean> {
   const row = await db
     .select({ id: routineSessions.id })

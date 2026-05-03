@@ -104,11 +104,17 @@ export function ActiveRoutineView() {
         <div className="min-w-0">
           {(() => {
             const phase = activeTimer?.phase;
-            const statusLabel = phase === 'break' ? 'Resting' : 'Active';
-            const dotClass = phase === 'break' ? 'bg-sky-500' : 'bg-primary';
+            const statusLabel =
+              phase === 'set' ? 'Active' : phase === 'break' ? 'Resting' : 'Idle';
+            const dotClass =
+              phase === 'set'
+                ? 'bg-primary animate-pulse'
+                : phase === 'break'
+                  ? 'bg-sky-500 animate-pulse'
+                  : 'bg-muted-foreground/60';
             return (
               <div className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full animate-pulse ${dotClass}`} />
+                <span className={`w-2 h-2 rounded-full ${dotClass}`} />
                 <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                   {statusLabel}
                 </span>

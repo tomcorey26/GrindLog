@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeNextPhase, computeReplayForward } from './routine-session';
+import { computeNextPhase, computeReplayForward, computeSummary } from './routine-session';
 import type { RoutineSessionSet, RoutineSessionActiveTimer } from './types';
 
 function makeSet(partial: Partial<RoutineSessionSet> & { blockIndex: number; setIndex: number }): RoutineSessionSet {
@@ -92,5 +92,30 @@ describe('computeReplayForward', () => {
     expect(computeReplayForward(makeTimer({ phase: 'break', targetDurationSeconds: 60 }), now)).toEqual({
       action: 'complete-break',
     });
+  });
+});
+
+describe('computeSummary', () => {
+  it('aggregates completed sets only', () => {
+    const sets: RoutineSessionSet[] = [
+      makeSet({ blockIndex: 0, setIndex: 0, habitNameSnapshot: 'Guitar', actualDurationSeconds: 60 }),
+      makeSet({ blockIndex: 0, setIndex: 1, habitNameSnapshot: 'Guitar', actualDurationSeconds: 30 }),
+      makeSet({ blockIndex: 1, setIndex: 0, habitNameSnapshot: 'Piano', actualDurationSeconds: 0 }),
+      makeSet({ blockIndex: 1, setIndex: 1, habitNameSnapshot: 'Piano', actualDurationSeconds: null }),
+    ];
+    const startedAt = '2026-05-02T00:00:00.000Z';
+    const finishedAt = '2026-05-02T00:10:00.000Z';
+    const result = computeSummary({
+      routineNameSnapshot: 'Morning',
+      sets,
+      startedAt,
+      finishedAt,
+    });
+    expect(result.totalElapsedSeconds).toBe(600);
+    expect(result.totalActiveSeconds).toBe(90);
+    expect(result.completedSetCount).toBe(2);
+    expect(result.byHabit).toEqual([
+      { habitName: 'Guitar', sets: 2, totalSeconds: 90 },
+    ]);
   });
 });

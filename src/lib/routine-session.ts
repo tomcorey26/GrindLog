@@ -1,4 +1,4 @@
-import type { RoutineSessionActiveTimer, RoutineSessionSet } from './types';
+import type { RoutineSessionActiveTimer, RoutineSessionSet, RoutineSessionSummary } from './types';
 
 export type NextPhaseInput = {
   sets: RoutineSessionSet[];
@@ -42,4 +42,41 @@ export function computeReplayForward(
   if (elapsed < timer.targetDurationSeconds) return { action: 'stable' };
   if (timer.phase === 'set') return { action: 'complete-set', setRowId: timer.routineSessionSetId };
   return { action: 'complete-break' };
+}
+
+export function computeSummary(input: {
+  routineNameSnapshot: string;
+  sets: RoutineSessionSet[];
+  startedAt: string;
+  finishedAt: string;
+}): RoutineSessionSummary {
+  const completed = input.sets.filter(
+    (s) => (s.actualDurationSeconds ?? 0) > 0,
+  );
+  const totalActiveSeconds = completed.reduce(
+    (sum, s) => sum + (s.actualDurationSeconds ?? 0),
+    0,
+  );
+  const totalElapsedSeconds = Math.max(
+    0,
+    Math.floor(
+      (new Date(input.finishedAt).getTime() - new Date(input.startedAt).getTime()) / 1000,
+    ),
+  );
+  const byHabitMap = new Map<string, { sets: number; totalSeconds: number }>();
+  for (const s of completed) {
+    const e = byHabitMap.get(s.habitNameSnapshot) ?? { sets: 0, totalSeconds: 0 };
+    e.sets += 1;
+    e.totalSeconds += s.actualDurationSeconds ?? 0;
+    byHabitMap.set(s.habitNameSnapshot, e);
+  }
+  return {
+    routineNameSnapshot: input.routineNameSnapshot,
+    startedAt: input.startedAt,
+    finishedAt: input.finishedAt,
+    totalElapsedSeconds,
+    totalActiveSeconds,
+    completedSetCount: completed.length,
+    byHabit: Array.from(byHabitMap, ([habitName, v]) => ({ habitName, ...v })),
+  };
 }

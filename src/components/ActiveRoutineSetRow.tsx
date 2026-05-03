@@ -18,6 +18,7 @@ type Props = {
   setNumber: number;
   state: SetRowState;
   displayTime: string;
+  breakProgressPct?: number;
   onStart: () => void;
   onEnd: () => void;
   onSkipBreak: () => void;
@@ -28,16 +29,16 @@ function fmtMins(s: number) {
   return `${Math.round(s / 60)} min`;
 }
 
-export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStart, onEnd, onSkipBreak, onPatch }: Props) {
+export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, breakProgressPct, onStart, onEnd, onSkipBreak, onPatch }: Props) {
   const isUpcoming = state === 'upcoming-idle' || state === 'upcoming-disabled';
   const isCompleted = state === 'completed';
   const isRunning = state === 'running';
   const isBreak = state === 'break-running';
 
   const rowClasses = [
-    'grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 items-center py-1.5 px-2 rounded transition-colors',
+    'relative grid grid-cols-[2rem_1fr_1fr_2.5rem] gap-2 items-center py-1.5 px-2 rounded transition-colors',
     isRunning ? 'bg-primary/15 border-l-4 border-primary ring-1 ring-primary/20' : '',
-    isBreak ? 'bg-amber-500/15 border-l-4 border-amber-500 ring-1 ring-amber-500/30' : '',
+    isBreak ? 'bg-amber-500/20 border-l-4 border-amber-500 ring-2 ring-amber-500/40 shadow-sm' : '',
     isCompleted ? 'bg-emerald-500/10 border-l-4 border-emerald-500/70 opacity-90' : '',
     !isRunning && !isBreak && !isCompleted && setNumber % 2 === 0 ? 'bg-muted/60' : '',
   ].join(' ');
@@ -45,7 +46,7 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
   const setNumberCircleClass = isCompleted
     ? 'inline-flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-mono font-medium relative'
     : isBreak
-      ? 'inline-flex items-center justify-center h-5 w-5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-mono font-medium relative'
+      ? 'inline-flex items-center justify-center h-5 w-5 rounded-full bg-amber-500/30 text-amber-800 dark:text-amber-300 text-[10px] font-mono font-medium relative'
       : 'inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-mono font-medium relative';
 
   return (
@@ -77,7 +78,7 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
           aria-label={`Set ${setNumber} duration in minutes`}
         />
       ) : (
-        <span className={`text-sm font-mono ${isRunning ? 'text-primary font-semibold' : 'text-foreground'}`}>
+        <span className={`text-sm font-mono ${isRunning ? 'text-primary font-semibold' : isBreak ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
           {isRunning ? displayTime : fmtMins(set.plannedDurationSeconds)}
         </span>
       )}
@@ -91,9 +92,9 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
           aria-label={`Set ${setNumber} break in minutes`}
         />
       ) : isBreak ? (
-        <span className="inline-flex items-center gap-1.5 text-sm font-mono font-semibold text-amber-700 dark:text-amber-400">
-          <Coffee className="h-3.5 w-3.5 animate-pulse" />
-          <span>Break {displayTime}</span>
+        <span className="inline-flex items-center gap-1.5 text-base font-mono font-bold text-amber-700 dark:text-amber-400">
+          <Coffee className="h-4 w-4 animate-pulse" />
+          <span>{displayTime}</span>
         </span>
       ) : (
         <span className="text-xs text-muted-foreground italic">
@@ -122,10 +123,10 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
         {state === 'break-running' && (
           <PressableButton
             size="icon-sm"
-            variant="ghost"
+            variant="default"
             onClick={onSkipBreak}
             aria-label="Skip break"
-            className="text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
+            className="bg-amber-500 hover:bg-amber-600 text-white shadow-[0_5px_0_0_color-mix(in_srgb,#f59e0b_70%,black)] active:shadow-none active:translate-y-1.25"
           >
             <SkipForward className="h-3.5 w-3.5" />
           </PressableButton>
@@ -136,6 +137,16 @@ export function ActiveRoutineSetRow({ set, setNumber, state, displayTime, onStar
           </span>
         )}
       </div>
+
+      {isBreak && breakProgressPct !== undefined && (
+        <div className="absolute left-0 right-0 bottom-0 h-1 bg-amber-500/20 rounded-b overflow-hidden">
+          <div
+            className="h-full bg-amber-500 transition-[width] duration-1000 ease-linear"
+            style={{ width: `${breakProgressPct * 100}%` }}
+            aria-hidden="true"
+          />
+        </div>
+      )}
     </div>
   );
 }

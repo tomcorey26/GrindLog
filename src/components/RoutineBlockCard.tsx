@@ -54,6 +54,7 @@ type ActiveRow = {
   set: RoutineSessionSet;
   state: SetRowState;
   displayTime: string;
+  breakProgressPct?: number;
   onStart: () => void;
   onEnd: () => void;
   onSkipBreak: () => void;

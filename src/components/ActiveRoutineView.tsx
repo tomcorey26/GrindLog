@@ -60,11 +60,21 @@ export function ActiveRoutineView() {
   const activeTimer = session.activeTimer;
 
   function rowState(set: RoutineSessionSet) {
-    if (set.completedAt) return 'completed' as const;
+    // Active timer takes precedence — when a break is running, the underlying
+    // set is already completedAt, but we want the row to show break-running
+    // (with the Skip button) until the break finishes.
     if (activeTimer?.routineSessionSetId === set.id) {
       return activeTimer.phase === 'break' ? ('break-running' as const) : ('running' as const);
     }
+    if (set.completedAt) return 'completed' as const;
     return activeTimer ? ('upcoming-disabled' as const) : ('upcoming-idle' as const);
+  }
+
+  function breakProgressPct(): number | undefined {
+    if (!activeTimer || activeTimer.phase !== 'break') return undefined;
+    const elapsed = (Date.now() - new Date(activeTimer.startTime).getTime()) / 1000;
+    const pct = 1 - elapsed / activeTimer.targetDurationSeconds;
+    return Math.max(0, Math.min(1, pct));
   }
 
   async function handleFinish() {
@@ -104,15 +114,19 @@ export function ActiveRoutineView() {
             mode="active"
             habitName={block.sets[0].habitNameSnapshot}
             notes={block.sets[0].notesSnapshot}
-            rows={block.sets.map((set) => ({
-              set,
-              state: rowState(set),
-              displayTime,
-              onStart: () => startSet.mutate(set.id),
-              onEnd: () => completeSet.mutate({ setRowId: set.id }),
-              onSkipBreak: () => skipBreak.mutate(),
-              onPatch: (patch) => patchSet.mutate({ setRowId: set.id, patch }),
-            }))}
+            rows={block.sets.map((set) => {
+              const state = rowState(set);
+              return {
+                set,
+                state,
+                displayTime,
+                breakProgressPct: state === 'break-running' ? breakProgressPct() : undefined,
+                onStart: () => startSet.mutate(set.id),
+                onEnd: () => completeSet.mutate({ setRowId: set.id }),
+                onSkipBreak: () => skipBreak.mutate(),
+                onPatch: (patch) => patchSet.mutate({ setRowId: set.id, patch }),
+              };
+            })}
           />
         ))}
       </div>
